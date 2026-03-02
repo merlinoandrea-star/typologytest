@@ -434,28 +434,28 @@ function renderResult(r) {
     { label: 'Estroverso', value: scores.E, angle: 198 },
   ];
 
-  const rcx = 120, rcy = 120, rrad = 80;
-  function radarPt(angle, val) {
+  const cx = 120, cy = 120, r = 80;
+  function point(angle, val) {
     const rad = (angle * Math.PI) / 180;
-    const dist = (val / 100) * rrad;
-    return { x: rcx + dist * Math.cos(rad), y: rcy + dist * Math.sin(rad) };
+    const dist = (val / 100) * r;
+    return { x: cx + dist * Math.cos(rad), y: cy + dist * Math.sin(rad) };
   }
-  const pts = radarData.map(d => radarPt(d.angle, d.value));
+  const pts = radarData.map(d => point(d.angle, d.value));
   const polyPath = pts.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z';
 
   // Assi background
   const axesHtml = radarData.map(d => {
-    const ep = radarPt(d.angle, 100);
-    const lp = radarPt(d.angle, 115);
-    return `<line x1="${rcx}" y1="${rcy}" x2="${ep.x.toFixed(1)}" y2="${ep.y.toFixed(1)}" stroke="#2a2a32" stroke-width="1"/>
+    const ep = point(d.angle, 100);
+    const lp = point(d.angle, 115);
+    return `<line x1="${cx}" y1="${cy}" x2="${ep.x.toFixed(1)}" y2="${ep.y.toFixed(1)}" stroke="#2a2a32" stroke-width="1"/>
     <text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#5a5650" font-family="DM Sans">${d.label}</text>`;
   }).join('');
 
   const radarSVG = `
   <svg class="radar" width="240" height="240" viewBox="0 0 240 240">
-    <circle cx="${rcx}" cy="${rcy}" r="${rrad}" fill="none" stroke="#1c1c22" stroke-width="1"/>
-    <circle cx="${rcx}" cy="${rcy}" r="${rrad*0.66}" fill="none" stroke="#1c1c22" stroke-width="1"/>
-    <circle cx="${rcx}" cy="${rcy}" r="${rrad*0.33}" fill="none" stroke="#1c1c22" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1c1c22" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${r*0.66}" fill="none" stroke="#1c1c22" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${r*0.33}" fill="none" stroke="#1c1c22" stroke-width="1"/>
     ${axesHtml}
     <path d="${polyPath}" fill="#c9a96e" fill-opacity="0.15" stroke="#c9a96e" stroke-width="1.5"/>
     ${pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#c9a96e"/>`).join('')}
