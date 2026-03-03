@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional
 import anthropic
 import os
 import traceback
@@ -215,18 +214,16 @@ def chat(data: ChatMessage):
     if not client:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY non configurata")
 
-    try:
-        q_index = data.current_question_index
-        responses = data.responses
+    q_index = data.current_question_index
+    responses = data.responses
 
-        if q_index < len(QUESTIONS):
-            current_q = QUESTIONS[q_index]
-            system_prompt = f"""Sei Sofia, una guida professionale che conduce un test psicologico basato sulla tipologia junghiana.
+    if q_index < len(QUESTIONS):
+        current_q = QUESTIONS[q_index]
+        system_prompt = f"""Sei Sofia, una guida professionale che conduce un test psicologico basato sulla tipologia junghiana.
 
 Il tuo unico compito è presentare la domanda in modo diretto e neutro.
 NON commentare la risposta precedente dell'utente.
 NON fare osservazioni, complimenti o considerazioni di alcun tipo.
-NON spiegare cosa misurano le domande.
 NON usare frasi come "Ottima scelta", "Interessante", "Capisco", "Grazie".
 Presenta esclusivamente la domanda successiva, nient'altro.
 
@@ -234,48 +231,46 @@ Domanda {current_q['id']} di 72:
 Opzione A: {current_q['testoA']}
 Opzione B: {current_q['testoB']}
 
-Formato richiesto: scrivi una sola frase introduttiva brevissima e neutra (es. "Domanda {current_q['id']}."), poi presenta le opzioni A e B su righe separate. Nessun altro testo."""
+Formato: scrivi solo "Domanda {current_q['id']}." poi su righe separate "A: [testo]" e "B: [testo]". Nessun altro testo."""
 
-        else:
-            result = calculate_type(responses)
-            profile = TYPE_PROFILES.get(result["type_code"], "Profilo in elaborazione.")
-            system_prompt = f"""Sei Sofia. Il test è completato.
-Presenta il profilo in modo professionale e diretto, senza entusiasmo eccessivo.
+    else:
+        result = calculate_type(responses)
+        profile = TYPE_PROFILES.get(result["type_code"], "Profilo in elaborazione.")
+        system_prompt = f"""Sei Sofia. Il test è completato.
+Presenta il profilo in modo professionale e diretto.
 
-Profilo calcolato:
+Profilo:
 - Sigla: {result['sigla']}
-- Nome completo: {result['nome_esteso']}
+- Nome: {result['nome_esteso']}
 - Descrizione: {profile}
 - Otroversione: {result['otroversion']}
 
-Scrivi 3-4 frasi che descrivono il profilo in modo chiaro e autorevole.
+Scrivi 3-4 frasi descrittive, chiare e autorevoli.
 Inizia con: "Il tuo profilo è {result['sigla']}."
-Non usare frasi motivazionali generiche. Sii preciso e concreto."""
+Niente frasi motivazionali. Sii preciso e concreto."""
 
-       # Filtra messaggi con content vuoto o mancante
-clean_history = [
-    m for m in data.conversation_history
-    if isinstance(m, dict)
-    and m.get("role") in ("user", "assistant")
-    and m.get("content")
-    and str(m.get("content")).strip()
-]
-messages = clean_history + [{"role": "user", "content": data.message}]
+    clean_history = [
+        m for m in data.conversation_history
+        if isinstance(m, dict)
+        and m.get("role") in ("user", "assistant")
+        and m.get("content")
+        and str(m.get("content")).strip()
+    ]
+    messages = clean_history + [{"role": "user", "content": data.message}]
 
+    try:
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=400,
             system=system_prompt,
             messages=messages
         )
-
         return {
             "response": response.content[0].text,
             "question_index": q_index,
             "total_questions": len(QUESTIONS),
             "completed": q_index >= len(QUESTIONS)
         }
-
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
