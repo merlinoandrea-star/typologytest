@@ -1,578 +1,440 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Typology — Scopri il tuo profilo</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TYPOLOGY</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1F2A44;
+  --accent:#3E5CFF;
+  --bg:#F8F9FB;
+  --text:#1F2A44;
+  --text-secondary:#4A4F5A;
+  --gold:#C8A75D;
+  --border:#E2E6EE;
+  --white:#FFFFFF;
+  --surface:#F0F3F9;
+  --shadow:0 2px 16px rgba(31,42,68,0.08);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
 
-    :root {
-      --bg: #0d0d0f;
-      --surface: #141418;
-      --surface2: #1c1c22;
-      --border: #2a2a32;
-      --accent: #c9a96e;
-      --accent2: #8b6f47;
-      --text: #e8e4dc;
-      --text2: #9a9490;
-      --text3: #5a5650;
-      --sofia: #c9a96e;
-      --user: #4a7c6f;
-      --radius: 16px;
-    }
+/* ── LOADING ── */
+#loading-screen{
+  position:fixed;inset:0;
+  background:linear-gradient(135deg,#1F2A44 0%,#2a3a60 60%,#3E5CFF 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2.5rem;z-index:100;transition:opacity 0.7s ease;
+}
+#loading-screen.fade-out{opacity:0;pointer-events:none}
+.loading-logo{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2rem,5vw,3rem);
+  font-weight:400;letter-spacing:0.25em;
+  color:#F8F9FB;
+}
+.loading-logo span{color:var(--gold);font-size:0.6em;letter-spacing:0.4em;display:block;margin-top:0.3rem;font-family:'Inter',sans-serif;font-weight:300;text-transform:uppercase}
+.loading-bar-wrap{width:200px;height:2px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden}
+.loading-bar-fill{height:100%;background:var(--accent);animation:loadSlide 3s ease forwards;width:0}
+@keyframes loadSlide{to{width:100%}}
+.loading-text{font-size:0.72rem;letter-spacing:0.2em;color:rgba(248,249,251,0.5);text-transform:uppercase;font-weight:300}
 
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow: hidden; }
+/* ── APP ── */
+#app{display:none;height:100vh;flex-direction:column}
+#app.visible{display:flex}
 
-    /* ── LAYOUT ── */
-    #app { display: flex; flex-direction: column; height: 100vh; max-width: 860px; margin: 0 auto; padding: 0 16px; }
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2.5rem;height:64px;
+  background:var(--primary);
+  flex-shrink:0;
+}
+.logo{
+  font-family:'Playfair Display',serif;
+  font-size:1.3rem;font-weight:500;
+  letter-spacing:0.15em;color:#F8F9FB;
+}
+.logo-dot{color:var(--gold);margin-left:2px}
+.progress-wrap{display:flex;align-items:center;gap:1.2rem}
+.progress-count{font-size:0.72rem;letter-spacing:0.12em;color:rgba(248,249,251,0.5);font-weight:300;text-transform:uppercase}
+.progress-track{width:120px;height:2px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.5s ease;width:0%}
 
-    /* ── HEADER ── */
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 0 16px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .logo { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; }
-    .logo span { font-style: italic; font-weight: 400; }
-    .progress-wrap { display: flex; align-items: center; gap: 12px; }
-    .progress-label { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
-    .progress-bar { width: 120px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 2px; transition: width 0.6s ease; }
+/* ── MAIN ── */
+main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
-    /* ── AVATAR ── */
-    .avatar-row { display: flex; align-items: center; gap: 14px; padding: 20px 0 12px; flex-shrink: 0; }
-    .avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--bg);
-      flex-shrink: 0; position: relative;
-    }
-    .avatar::after {
-      content: ''; position: absolute; inset: -2px; border-radius: 50%;
-      border: 1px solid var(--accent); opacity: 0.4;
-    }
-    .avatar-info { }
-    .avatar-name { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: 0.04em; }
-    .avatar-role { font-size: 11px; color: var(--text3); font-style: italic; }
+/* ── CHAT AREA ── */
+#chat-view{display:flex;flex-direction:column;flex:1;overflow:hidden}
 
-    /* ── CHAT ── */
-    #chat {
-      flex: 1; overflow-y: auto; padding: 8px 0 16px;
-      display: flex; flex-direction: column; gap: 16px;
-      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-    }
-    #chat::-webkit-scrollbar { width: 4px; }
-    #chat::-webkit-scrollbar-track { background: transparent; }
-    #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+#messages{
+  flex:1;overflow-y:auto;
+  padding:2.5rem;
+  display:flex;flex-direction:column;gap:1.5rem;
+  scroll-behavior:smooth;
+}
+#messages::-webkit-scrollbar{width:4px}
+#messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
-    .msg { display: flex; gap: 10px; animation: fadeUp 0.35s ease; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.msg{display:flex;gap:1rem;animation:msgIn 0.35s ease both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse}
 
-    .msg.sofia { align-items: flex-start; }
-    .msg.user { flex-direction: row-reverse; }
+.avatar{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:2px;font-size:0.85rem;font-weight:500;
+}
+.avatar.sofia{background:var(--primary);color:var(--gold)}
+.avatar.user-av{background:var(--accent);color:#fff}
 
-    .msg-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
-    .msg-avatar.sofia-av { background: linear-gradient(135deg, var(--accent2), var(--accent)); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: var(--bg); }
-    .msg-avatar.user-av { background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text2); }
+.bubble{
+  max-width:65%;padding:1rem 1.25rem;
+  line-height:1.7;font-size:0.92rem;
+  border-radius:12px;
+}
+.msg.sofia .bubble{
+  background:var(--white);
+  border:1px solid var(--border);
+  color:var(--text);
+  box-shadow:var(--shadow);
+}
+.msg.user .bubble{
+  background:var(--primary);
+  color:#F8F9FB;
+  border-radius:12px 12px 4px 12px;
+}
 
-    .bubble {
-      max-width: 78%; padding: 13px 16px; border-radius: var(--radius);
-      font-size: 14px; line-height: 1.65; font-weight: 300;
-    }
-    .msg.sofia .bubble { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-top-left-radius: 4px; }
-    .msg.user .bubble { background: var(--user); color: #e8f4f0; border-top-right-radius: 4px; font-style: italic; }
+/* ── TYPING ── */
+.typing{display:flex;align-items:center;gap:5px;padding:4px 0}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:0.2s}
+.dot:nth-child(3){animation-delay:0.4s}
+@keyframes pulse{0%,60%,100%{opacity:0.25;transform:scale(0.8)}30%{opacity:1;transform:scale(1)}}
 
-    /* ── SCELTE A/B ── */
-    .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
-    .choice-btn {
-      background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); padding: 11px 16px; border-radius: 10px;
-      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 300;
-      cursor: pointer; text-align: left; transition: all 0.2s ease;
-      display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
-    }
-    .choice-btn:hover { background: var(--surface); border-color: var(--accent2); color: var(--text); }
-    .choice-btn:active { transform: scale(0.99); }
-    .choice-label {
-      font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600;
-      color: var(--accent); flex-shrink: 0; line-height: 1.4;
-    }
+/* ── INPUT AREA ── */
+#input-area{
+  padding:1.5rem 2.5rem;
+  border-top:1px solid var(--border);
+  background:var(--white);
+  flex-shrink:0;
+}
 
-    /* ── TYPING ── */
-    .typing { display: flex; gap: 5px; align-items: center; padding: 13px 16px; }
-    .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); animation: bounce 1.2s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%,80%,100%{ transform:scale(0.7); opacity:0.4; } 40%{ transform:scale(1); opacity:1; } }
+#choice-buttons{display:flex;gap:1rem;margin-bottom:1rem}
+.choice-btn{
+  flex:1;padding:0.85rem 1rem;
+  border:1.5px solid var(--border);
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',sans-serif;font-size:0.82rem;
+  font-weight:500;letter-spacing:0.08em;
+  cursor:pointer;border-radius:8px;
+  transition:all 0.2s ease;
+  text-transform:uppercase;
+}
+.choice-btn:hover{background:var(--primary);color:#F8F9FB;border-color:var(--primary);transform:translateY(-1px);box-shadow:0 4px 12px rgba(31,42,68,0.15)}
+.choice-btn.selected{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 12px rgba(62,92,255,0.25)}
 
-    /* ── RISULTATO ── */
-    #result-panel { display: none; flex-direction: column; gap: 0; animation: fadeUp 0.5s ease; overflow-y: auto; flex: 1; }
-    #result-panel.visible { display: flex; }
+.input-row{display:flex;gap:0.75rem}
+#user-input{
+  flex:1;padding:0.85rem 1.1rem;
+  border:1.5px solid var(--border);
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:400;
+  border-radius:8px;outline:none;
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+#user-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(62,92,255,0.1)}
+#user-input::placeholder{color:#9BA3B2}
 
-    .result-header {
-      padding: 28px 0 20px;
-      border-bottom: 1px solid var(--border);
-    }
-    .result-tag { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent2); margin-bottom: 10px; }
-    .result-sigla {
-      font-family: 'Cormorant Garamond', serif; font-size: 38px; font-weight: 300;
-      color: var(--accent); letter-spacing: 0.08em; line-height: 1.1;
-    }
-    .result-otroversion {
-      display: inline-block; margin-top: 10px;
-      padding: 4px 14px; border: 1px solid var(--accent2); border-radius: 20px;
-      font-size: 12px; letter-spacing: 0.1em; color: var(--accent); text-transform: uppercase;
-    }
+#send-btn{
+  width:46px;height:46px;
+  background:var(--accent);border:none;
+  border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(62,92,255,0.3);
+}
+#send-btn:hover{background:#2d4ae0;transform:translateY(-1px);box-shadow:0 4px 12px rgba(62,92,255,0.4)}
+#send-btn svg{width:18px;height:18px;fill:#fff}
+#send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.hint{margin-top:0.6rem;font-size:0.7rem;letter-spacing:0.1em;color:#9BA3B2;text-align:center;text-transform:uppercase}
 
-    .result-section { padding: 20px 0; border-bottom: 1px solid var(--border); }
-    .result-section:last-child { border-bottom: none; }
-    .section-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+/* ── RESULT ── */
+#result-panel{display:none;flex:1;overflow-y:auto;background:var(--bg);animation:msgIn 0.5s ease}
+#result-panel.visible{display:block}
 
-    .functions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .function-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-      padding: 14px 16px;
-    }
-    .function-card.dominant { border-color: var(--accent2); }
-    .function-role { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
-    .function-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--text); font-weight: 400; }
-    .function-card.dominant .function-name { color: var(--accent); }
-    .function-score { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.result-hero{
+  background:linear-gradient(135deg,#1F2A44 0%,#2a3a60 100%);
+  padding:4rem 2.5rem 3rem;
+  text-align:center;
+}
+.result-eyebrow{
+  font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:1.25rem;font-weight:400;
+}
+.result-sigla{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(2rem,5vw,3rem);
+  font-weight:400;color:#F8F9FB;
+  letter-spacing:0.1em;margin-bottom:1rem;
+}
+.result-subtitle{
+  font-size:0.85rem;color:rgba(248,249,251,0.6);
+  letter-spacing:0.05em;line-height:1.6;
+  max-width:500px;margin:0 auto 1.5rem;
+}
+.otroversion-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  padding:0.45rem 1.1rem;
+  border:1px solid var(--gold);border-radius:20px;
+  font-size:0.72rem;letter-spacing:0.18em;
+  text-transform:uppercase;color:var(--gold);
+}
 
-    .radar-wrap { display: flex; justify-content: center; padding: 8px 0; }
-    svg.radar { overflow: visible; }
+.result-body{max-width:680px;margin:0 auto;padding:3rem 2.5rem}
 
-    .profile-text { font-size: 14px; line-height: 1.75; font-weight: 300; color: var(--text2); }
+.result-card{
+  background:var(--white);border-radius:12px;
+  padding:2rem;margin-bottom:1.5rem;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.card-label{
+  font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--accent);font-weight:500;margin-bottom:1rem;
+}
+.card-title{
+  font-family:'Playfair Display',serif;
+  font-size:1.1rem;font-weight:500;
+  color:var(--primary);margin-bottom:0.75rem;line-height:1.4;
+}
+.card-text{font-size:0.92rem;line-height:1.75;color:var(--text-secondary)}
 
-    .belonging-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 18px 20px; display: flex; gap: 16px; align-items: flex-start;
-    }
-    .belonging-icon { font-size: 28px; flex-shrink: 0; }
-    .belonging-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--accent); margin-bottom: 6px; }
-    .belonging-desc { font-size: 13px; line-height: 1.65; font-weight: 300; color: var(--text2); }
+.scores-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.score-item{}
+.score-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.35rem}
+.score-name{font-size:0.78rem;font-weight:500;color:var(--text)}
+.score-val{font-size:0.72rem;color:var(--text-secondary);font-weight:400}
+.score-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.score-bar{height:100%;background:linear-gradient(90deg,var(--accent),#6b87ff);border-radius:2px;transition:width 1s ease 0.3s;width:0%}
 
-    /* ── INPUT ── */
-    #input-area { padding: 12px 0 20px; flex-shrink: 0; border-top: 1px solid var(--border); }
-    #input-row { display: flex; gap: 10px; }
-    #user-input {
-      flex: 1; background: var(--surface); border: 1px solid var(--border);
-      color: var(--text); padding: 12px 16px; border-radius: 12px;
-      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300;
-      outline: none; transition: border-color 0.2s;
-    }
-    #user-input:focus { border-color: var(--accent2); }
-    #user-input::placeholder { color: var(--text3); }
-    #send-btn {
-      background: var(--accent); border: none; color: var(--bg);
-      width: 44px; height: 44px; border-radius: 12px; cursor: pointer;
-      font-size: 18px; display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s, transform 0.1s; flex-shrink: 0;
-    }
-    #send-btn:hover { background: var(--text); }
-    #send-btn:active { transform: scale(0.96); }
-    .hint { font-size: 11px; color: var(--text3); text-align: center; margin-top: 8px; letter-spacing: 0.04em; }
+.restart-btn{
+  display:block;width:100%;
+  padding:1rem;margin-top:2rem;
+  border:1.5px solid var(--primary);
+  background:transparent;color:var(--primary);
+  font-family:'Inter',sans-serif;font-size:0.8rem;
+  font-weight:500;letter-spacing:0.15em;text-transform:uppercase;
+  cursor:pointer;border-radius:8px;
+  transition:all 0.2s;
+}
+.restart-btn:hover{background:var(--primary);color:#F8F9FB}
 
-    @media (max-width: 600px) {
-      .functions-grid { grid-template-columns: 1fr; }
-      .result-sigla { font-size: 26px; }
-    }
-  </style>
+/* ── TOAST ── */
+#error-toast{
+  display:none;position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
+  background:#C0392B;color:#fff;
+  padding:0.75rem 1.5rem;border-radius:8px;
+  font-size:0.82rem;z-index:200;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,0.2);
+}
+
+@media(max-width:640px){
+  header{padding:0 1.25rem}
+  #messages,#input-area{padding:1.25rem}
+  .bubble{max-width:85%}
+  #choice-buttons{flex-direction:column}
+  .scores-grid{grid-template-columns:1fr}
+  .result-hero{padding:3rem 1.5rem 2rem}
+  .result-body{padding:2rem 1.25rem}
+}
+</style>
 </head>
 <body>
-<div id="app">
 
+<div id="loading-screen">
+  <div class="loading-logo">
+    Typology
+    <span>Scopri il tuo profilo</span>
+  </div>
+  <div class="loading-bar-wrap"><div class="loading-bar-fill"></div></div>
+  <div class="loading-text" id="loading-text">Connessione in corso…</div>
+</div>
+
+<div id="app">
   <header>
-    <div class="logo">Typo<span>logy</span></div>
+    <div class="logo">Typology<span class="logo-dot">·</span></div>
     <div class="progress-wrap">
-      <span class="progress-label">Progresso</span>
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-      <span class="progress-label" id="progress-text">0 / 72</span>
+      <span class="progress-count" id="progress-label">0 / 72</span>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
   </header>
 
-  <div class="avatar-row">
-    <div class="avatar">S</div>
-    <div class="avatar-info">
-      <div class="avatar-name">Sofia</div>
-      <div class="avatar-role">Guida alla scoperta del tuo profilo</div>
+  <main>
+    <div id="chat-view">
+      <div id="messages"></div>
+      <div id="input-area">
+        <div id="choice-buttons" style="display:none;">
+          <button class="choice-btn" id="btn-a" onclick="sendChoice('A')">A</button>
+          <button class="choice-btn" id="btn-b" onclick="sendChoice('B')">B</button>
+        </div>
+        <div class="input-row">
+          <input id="user-input" type="text" placeholder="Scrivi A o B, oppure un messaggio…" autocomplete="off"/>
+          <button id="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24"><path d="M2 12L22 2 15 22 11 13z"/></svg>
+          </button>
+        </div>
+        <div class="hint">Scegli A o B · oppure scrivi e premi Invio</div>
+      </div>
     </div>
-  </div>
 
-  <!-- CHAT -->
-  <div id="chat"></div>
-
-  <!-- RISULTATO (nascosto finché non completo) -->
-  <div id="result-panel"></div>
-
-  <!-- INPUT -->
-  <div id="input-area">
-    <div id="input-row">
-      <input id="user-input" type="text" placeholder="Scrivi o scegli A / B..." autocomplete="off" />
-      <button id="send-btn">↑</button>
+    <div id="result-panel">
+      <div class="result-hero">
+        <div class="result-eyebrow">Il tuo profilo tipologico</div>
+        <div class="result-sigla" id="res-sigla">—</div>
+        <div class="result-subtitle" id="res-subtitle"></div>
+        <div class="otroversion-badge" id="res-otroversion">—</div>
+      </div>
+      <div class="result-body">
+        <div class="result-card">
+          <div class="card-label">Descrizione del profilo</div>
+          <div class="card-text" id="res-desc"></div>
+        </div>
+        <div class="result-card">
+          <div class="card-label">Punteggi per dimensione</div>
+          <div class="scores-grid" id="res-scores"></div>
+        </div>
+        <button class="restart-btn" onclick="location.reload()">Ricomincia il test</button>
+      </div>
     </div>
-    <div class="hint" id="hint-text">Rispondi scegliendo A o B, oppure scrivi liberamente</div>
-  </div>
+  </main>
 </div>
+
+<div id="error-toast"></div>
 
 <script>
 const API = 'https://typologytest.onrender.com';
+let conversationHistory = [], responses = {}, currentQuestionIndex = 0, isWaiting = false;
 
-let questions = [];
-let responses = {};
-let conversationHistory = [];
-let currentQIndex = 0;
-let awaitingChoice = false;
-let testCompleted = false;
+function showError(msg){const t=document.getElementById('error-toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',4000)}
+function updateProgress(n){document.getElementById('progress-fill').style.width=Math.round(n/72*100)+'%';document.getElementById('progress-label').textContent=n+' / 72'}
+function scrollDown(){const m=document.getElementById('messages');setTimeout(()=>m.scrollTop=m.scrollHeight,50)}
 
-const chat = document.getElementById('chat');
-const resultPanel = document.getElementById('result-panel');
-const input = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
-const progressFill = document.getElementById('progress-fill');
-const progressText = document.getElementById('progress-text');
-
-// ── UTILITIES ─────────────────────────────────────────────────────────────
-function scrollBottom() {
-  chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+function addMessage(role,text){
+  const m=document.getElementById('messages'),div=document.createElement('div');
+  div.className='msg '+(role==='assistant'?'sofia':'user');
+  const initial=role==='assistant'?'S':'T';
+  div.innerHTML=`<div class="avatar ${role==='assistant'?'sofia':'user-av'}">${initial}</div><div class="bubble">${text.replace(/\n/g,'<br>')}</div>`;
+  m.appendChild(div);scrollDown();
 }
+function showTyping(){const m=document.getElementById('messages'),div=document.createElement('div');div.className='msg sofia';div.id='typing-ind';div.innerHTML=`<div class="avatar sofia">S</div><div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;m.appendChild(div);scrollDown()}
+function removeTyping(){const t=document.getElementById('typing-ind');if(t)t.remove()}
 
-function updateProgress() {
-  const pct = (Object.keys(responses).length / 72) * 100;
-  progressFill.style.width = pct + '%';
-  progressText.textContent = `${Object.keys(responses).length} / 72`;
-}
-
-function addMsg(role, text, showChoices = false, qIndex = null) {
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-
-  const av = document.createElement('div');
-  av.className = `msg-avatar ${role === 'sofia' ? 'sofia-av' : 'user-av'}`;
-  av.textContent = role === 'sofia' ? 'S' : '✦';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.textContent = text;
-
-  div.appendChild(av);
-  div.appendChild(bubble);
-  chat.appendChild(div);
-
-  if (showChoices && qIndex !== null && qIndex < questions.length) {
-    const q = questions[qIndex];
-    const choicesDiv = document.createElement('div');
-    choicesDiv.className = 'choices';
-
-    ['A', 'B'].forEach(letter => {
-      const btn = document.createElement('button');
-      btn.className = 'choice-btn';
-      btn.innerHTML = `<span class="choice-label">${letter}</span><span>${letter === 'A' ? q.testoA : q.testoB}</span>`;
-      btn.onclick = () => {
-        choicesDiv.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
-        choicesDiv.style.opacity = '0.5';
-        handleChoice(letter, qIndex);
-      };
-      choicesDiv.appendChild(btn);
-    });
-
-    chat.appendChild(choicesDiv);
-  }
-
-  scrollBottom();
-}
-
-function showTyping() {
-  const div = document.createElement('div');
-  div.className = 'msg sofia';
-  div.id = 'typing-indicator';
-
-  const av = document.createElement('div');
-  av.className = 'msg-avatar sofia-av';
-  av.textContent = 'S';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerHTML = '<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-
-  div.appendChild(av);
-  div.appendChild(bubble);
-  chat.appendChild(div);
-  scrollBottom();
-}
-
-function removeTyping() {
-  const t = document.getElementById('typing-indicator');
-  if (t) t.remove();
-}
-
-// ── INIT ──────────────────────────────────────────────────────────────────
-async function init() {
-  try {
-    const res = await fetch(`${API}/api/questions`);
-    const data = await res.json();
-    questions = data.questions;
-    startConversation();
-  } catch(e) {
-    addMsg('sofia', 'Errore di connessione. Ricarica la pagina.');
-  }
-}
-
-async function startConversation() {
-  showTyping();
-  const res = await fetch(`${API}/api/chat`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      message: 'inizia',
-      conversation_history: [],
-      responses: {},
-      current_question_index: 0
-    })
-  });
-  const data = await res.json();
-  removeTyping();
-
-  conversationHistory.push({role: 'user', content: 'inizia'});
-  conversationHistory.push({role: 'assistant', content: data.response});
-
-  addMsg('sofia', data.response, true, 0);
-  awaitingChoice = true;
-}
-
-// ── GESTIONE SCELTA A/B ───────────────────────────────────────────────────
-async function handleChoice(choice, qIndex) {
-  awaitingChoice = false;
-  const q = questions[qIndex];
-  const choiceText = choice === 'A' ? q.testoA : q.testoB;
-
-  // Registra risposta
-  responses[String(q.id)] = choice;
-  updateProgress();
-
-  // Mostra risposta utente
-  addMsg('user', `${choice} — ${choiceText}`);
-
-  // Avanza al prossimo
-  currentQIndex = qIndex + 1;
-
-  if (currentQIndex >= questions.length) {
-    // Test completato
-    await showFinalResult();
-    return;
-  }
-
-  // Prossima domanda
-  showTyping();
-  try {
-    conversationHistory.push({role: 'user', content: choice});
-
-    const res = await fetch(`${API}/api/chat`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        message: choice,
-        conversation_history: conversationHistory.slice(-8), // ultimi 8 messaggi
-        responses,
-        current_question_index: currentQIndex
-      })
-    });
-    const data = await res.json();
-    removeTyping();
-
-    conversationHistory.push({role: 'assistant', content: data.response});
-    addMsg('sofia', data.response, true, currentQIndex);
-    awaitingChoice = true;
-
-  } catch(e) {
-    removeTyping();
-    addMsg('sofia', 'Errore. Riprova.');
-  }
-}
-
-// ── RISULTATO FINALE ──────────────────────────────────────────────────────
-async function showFinalResult() {
-  showTyping();
-
-  try {
-    const res = await fetch(`${API}/api/submit`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ responses })
-    });
-    const result = await res.json();
-    removeTyping();
-
-    // Nascondi chat, mostra risultato
-    chat.style.display = 'none';
-    document.getElementById('input-area').style.display = 'none';
-    document.querySelector('.avatar-row').style.display = 'none';
-
-    resultPanel.classList.add('visible');
-    renderResult(result);
-
-  } catch(e) {
-    removeTyping();
-    addMsg('sofia', 'Errore nel calcolo del profilo. Ricarica la pagina.');
-  }
-}
-
-function renderResult(r) {
-  const fn = { T:'Pensiero', F:'Sentimento', S:'Sensazione', N:'Intuizione', E:'Estroverso', I:'Introverso' };
-  const scores = r.scores;
-
-  // Radar SVG
-  const radarData = [
-    { label: 'Pensiero', value: scores.T, angle: -90 },
-    { label: 'Intuizione', value: scores.N, angle: -18 },
-    { label: 'Sentimento', value: scores.F, angle: 54 },
-    { label: 'Sensazione', value: scores.S, angle: 126 },
-    { label: 'Estroverso', value: scores.E, angle: 198 },
-  ];
-
-  const rcx = 120, rcy = 120, rrad = 80;
-  function radarPt(angle, val) {
-    const rad = (angle * Math.PI) / 180;
-    const dist = (val / 100) * rrad;
-    return { x: rcx + dist * Math.cos(rad), y: rcy + dist * Math.sin(rad) };
-  }
-  const pts = radarData.map(d => radarPt(d.angle, d.value));
-  const polyPath = pts.map((p,i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z';
-
-  // Assi background
-  const axesHtml = radarData.map(d => {
-    const ep = radarPt(d.angle, 100);
-    const lp = radarPt(d.angle, 115);
-    return `<line x1="${rcx}" y1="${rcy}" x2="${ep.x.toFixed(1)}" y2="${ep.y.toFixed(1)}" stroke="#2a2a32" stroke-width="1"/>
-    <text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#5a5650" font-family="DM Sans">${d.label}</text>`;
-  }).join('');
-
-  const radarSVG = `
-  <svg class="radar" width="240" height="240" viewBox="0 0 240 240">
-    <circle cx="${rcx}" cy="${rcy}" r="${rrad}" fill="none" stroke="#1c1c22" stroke-width="1"/>
-    <circle cx="${rcx}" cy="${rcy}" r="${rrad*0.66}" fill="none" stroke="#1c1c22" stroke-width="1"/>
-    <circle cx="${rcx}" cy="${rcy}" r="${rrad*0.33}" fill="none" stroke="#1c1c22" stroke-width="1"/>
-    ${axesHtml}
-    <path d="${polyPath}" fill="#c9a96e" fill-opacity="0.15" stroke="#c9a96e" stroke-width="1.5"/>
-    ${pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#c9a96e"/>`).join('')}
-  </svg>`;
-
-  // Belonging/Not Belonging descrizione
-  const belongingDesc = r.otroversion === 'Belonging'
-    ? 'Ti identifichi con gruppi e comunità, condividi valori collettivi e cerchi naturalmente l\'appartenenza. Trova forza e motivazione nel senso di "noi".'
-    : 'Mantieni la tua identità distinta dai gruppi. Preferisci relazioni individuali profonde e non hai bisogno di appartenere a una comunità per sentirti completo.';
-
-  resultPanel.innerHTML = `
-    <div class="result-header">
-      <div class="result-tag">Il tuo profilo tipologico</div>
-      <div class="result-sigla">${r.sigla}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:8px;line-height:1.6;font-weight:300;">${r.nome_esteso}</div>
-      <div class="result-otroversion">${r.otroversion}</div>
-    </div>
-
-    <div class="result-section">
-      <div class="section-label">Funzioni psicologiche</div>
-      <div class="functions-grid">
-        <div class="function-card dominant">
-          <div class="function-role">Funzione Primaria</div>
-          <div class="function-name">${fn[r.dominant]}</div>
-          <div class="function-score">${scores[r.dominant]}%</div>
-        </div>
-        <div class="function-card">
-          <div class="function-role">Funzione Ausiliaria</div>
-          <div class="function-name">${fn[r.auxiliary]}</div>
-          <div class="function-score">${scores[r.auxiliary]}%</div>
-        </div>
-        <div class="function-card">
-          <div class="function-role">Funzione Mediatrice</div>
-          <div class="function-name">${fn[r.tertiary]}</div>
-          <div class="function-score">${scores[r.tertiary]}%</div>
-        </div>
-        <div class="function-card">
-          <div class="function-role">Funzione Inferiore</div>
-          <div class="function-name">${fn[r.inferior]}</div>
-          <div class="function-score">${scores[r.inferior]}%</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="result-section">
-      <div class="section-label">Mappa delle funzioni</div>
-      <div class="radar-wrap">${radarSVG}</div>
-    </div>
-
-    <div class="result-section">
-      <div class="section-label">Descrizione del profilo</div>
-      <div class="profile-text">${r.profile_description}</div>
-    </div>
-
-    <div class="result-section">
-      <div class="section-label">Otroversione — Kaminski</div>
-      <div class="belonging-card">
-        <div class="belonging-icon">${r.otroversion === 'Belonging' ? '🤝' : '✦'}</div>
-        <div>
-          <div class="belonging-title">${r.otroversion}</div>
-          <div class="belonging-desc">${belongingDesc}</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// ── INVIO TESTO LIBERO ─────────────────────────────────────────────────────
-async function sendMessage() {
-  const text = input.value.trim();
-  if (!text || testCompleted) return;
-
-  // Intercetta A/B
-  const upper = text.toUpperCase();
-  if (awaitingChoice && (upper === 'A' || upper === 'B')) {
-    input.value = '';
-    const btns = document.querySelectorAll('.choice-btn:not([disabled])');
-    if (btns.length >= 2) {
-      const idx = upper === 'A' ? 0 : 1;
-      btns[idx].click();
+async function callAPI(endpoint,body,retries=4){
+  for(let i=0;i<retries;i++){
+    try{
+      const res=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(65000)});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      return await res.json();
+    }catch(e){
+      if(i<retries-1){showError('Connessione lenta… tentativo '+(i+2)+'/'+retries);await new Promise(r=>setTimeout(r,4000));}
+      else throw e;
     }
-    return;
-  }
-
-  input.value = '';
-  addMsg('user', text);
-
-  showTyping();
-  conversationHistory.push({role: 'user', content: text});
-
-  try {
-    const res = await fetch(`${API}/api/chat`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        message: text,
-        conversation_history: conversationHistory.slice(-8),
-        responses,
-        current_question_index: currentQIndex
-      })
-    });
-    const data = await res.json();
-    removeTyping();
-
-    conversationHistory.push({role: 'assistant', content: data.response});
-    addMsg('sofia', data.response, awaitingChoice, currentQIndex);
-
-  } catch(e) {
-    removeTyping();
-    addMsg('sofia', 'Errore di connessione. Riprova.');
   }
 }
 
-sendBtn.onclick = sendMessage;
-input.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+async function sendMessage(){
+  const input=document.getElementById('user-input'),text=input.value.trim();
+  if(!text||isWaiting)return;
+  const u=text.toUpperCase();
+  if(u==='A'||u==='B'){sendChoice(u);return;}
+  input.value='';addMessage('user',text);await fetchResponse(text,null);
+}
 
-init();
+async function sendChoice(choice){
+  if(isWaiting)return;
+  document.getElementById('btn-a').classList.toggle('selected',choice==='A');
+  document.getElementById('btn-b').classList.toggle('selected',choice==='B');
+  responses[String(currentQuestionIndex+1)]=choice;
+  addMessage('user',choice==='A'?'Opzione A':'Opzione B');
+  await fetchResponse(choice,choice);
+}
+
+async function fetchResponse(userText,choice){
+  isWaiting=true;
+  document.getElementById('send-btn').disabled=true;
+  document.getElementById('choice-buttons').style.display='none';
+  showTyping();
+  const history=[...conversationHistory];
+  try{
+    const data=await callAPI('/api/chat',{message:userText,conversation_history:conversationHistory,responses:responses,current_question_index:currentQuestionIndex});
+    removeTyping();
+    conversationHistory=[...history,{role:'user',content:userText},{role:'assistant',content:data.response}];
+    addMessage('assistant',data.response);
+    if(data.completed){setTimeout(()=>loadAndShowResult(),1200);}
+    else{
+      currentQuestionIndex=data.question_index+1;
+      if(choice)updateProgress(currentQuestionIndex);
+      document.getElementById('btn-a').classList.remove('selected');
+      document.getElementById('btn-b').classList.remove('selected');
+      document.getElementById('choice-buttons').style.display='flex';
+    }
+  }catch(e){
+    removeTyping();addMessage('assistant','Si è verificato un problema di connessione. Riprova.');
+    document.getElementById('choice-buttons').style.display='flex';
+  }
+  isWaiting=false;document.getElementById('send-btn').disabled=false;
+}
+
+async function loadAndShowResult(){
+  updateProgress(72);
+  document.getElementById('chat-view').style.display='none';
+  document.getElementById('result-panel').classList.add('visible');
+  try{const data=await callAPI('/api/submit',{responses});renderResult(data);}
+  catch(e){document.getElementById('res-desc').textContent='Errore nel calcolo del profilo. Ricarica la pagina.';}
+}
+
+function renderResult(d){
+  const s=d.scores;
+  document.getElementById('res-sigla').textContent=d.sigla;
+  document.getElementById('res-subtitle').textContent=d.nome_esteso;
+  document.getElementById('res-otroversion').textContent='◆ '+d.otroversion;
+  document.getElementById('res-desc').textContent=d.profile_description;
+  const grid=document.getElementById('res-scores');
+  grid.innerHTML=[['Pensiero',s.T],['Sentimento',s.F],['Sensazione',s.S],['Intuizione',s.N],['Estroversione',s.E],['Introversione',s.I]]
+    .map(([l,v])=>`<div class="score-item"><div class="score-row"><span class="score-name">${l}</span><span class="score-val">${v}%</span></div><div class="score-track"><div class="score-bar" data-val="${v}"></div></div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('.score-bar').forEach(b=>b.style.width=b.dataset.val+'%'),300);
+}
+
+async function wakeAndStart(){
+  const loadText=document.getElementById('loading-text');
+  let dots=0;
+  const spin=setInterval(()=>{dots=(dots+1)%4;loadText.textContent='Connessione in corso'+'.'.repeat(dots);},600);
+  for(let i=0;i<8;i++){
+    try{const r=await fetch(API+'/',{signal:AbortSignal.timeout(12000)});if(r.ok)break;}catch(e){}
+    await new Promise(r=>setTimeout(r,5000));
+  }
+  clearInterval(spin);loadText.textContent='Pronto!';
+  await new Promise(r=>setTimeout(r,400));
+  document.getElementById('loading-screen').classList.add('fade-out');
+  setTimeout(()=>{document.getElementById('loading-screen').style.display='none';document.getElementById('app').classList.add('visible');},800);
+
+  showTyping();
+  try{
+    const data=await callAPI('/api/chat',{message:'Inizia il test',conversation_history:[],responses:{},current_question_index:0});
+    removeTyping();
+    conversationHistory=[{role:'user',content:'Inizia il test'},{role:'assistant',content:data.response}];
+    addMessage('assistant',data.response);
+    document.getElementById('choice-buttons').style.display='flex';
+  }catch(e){
+    removeTyping();addMessage('assistant','Ciao! Sono Sofia. Problemi di connessione — ricarica la pagina per iniziare.');
+  }
+}
+
+document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
+wakeAndStart();
 </script>
 </body>
 </html>
