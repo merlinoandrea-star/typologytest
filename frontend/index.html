@@ -444,120 +444,61 @@ function renderResult(d){
     : `<div class="score-item"><div class="score-row"><span class="score-name">${l}</span><span class="score-val">${v}%</span></div><div class="score-track"><div class="score-bar" data-val="${v}"></div></div></div>`;
   grid.innerHTML = funzioni.map(makeBar).join('') + '<div class="scores-divider"></div>' + orientamento.map(makeBar).join('');
   setTimeout(()=>document.querySelectorAll('.score-bar').forEach(b=>b.style.width=b.dataset.val+'%'),300);
-  // Sezioni profilo
-  const setText=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
-  const setList=(id,items)=>{const el=document.getElementById(id);if(el)el.innerHTML=items.map(i=>`<li>${i}</li>`).join('');};
+  // Sezioni profilo — dati dal RAG o fallback statici
+  const setText=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt||'';};
+  const setList=(id,items)=>{const el=document.getElementById(id);if(el)el.innerHTML=(items||[]).map(i=>`<li>${i}</li>`).join('');};
+  const sec = d.sections || {};
+
+  // Helper: usa il testo RAG se disponibile, altrimenti fallback
+  const rag = (key, fallback) => (sec[key] && !sec[key].startsWith('[RAG non')) ? sec[key] : fallback;
 
   // SEZ 1 — Il tuo tipo
-  setText('prof-panoramica',
-    'Il Tipo EPN (Estroverso Pensiero Intuizione) — Condottiero\n\nIl Tipo EPN è orientato verso il mondo esterno e verso gli altri. A guidarlo nelle sue azioni è la funzione P Pensiero prevalente introverso, un pensiero sviluppante, fecondo e creativo, che tende a innovare, a estendersi e a propagarsi in ogni direzione. La funzione N Intuizione collabora con il P Pensiero nel sintetizzare i concetti prodotti, per poi collegarli con altri concetti già a sua disposizione e formare così uno schema sempre più ampio.\n\nLe funzioni P e N, combinate con l\'orientamento Estroverso, portano il Tipo a vedere le cose ad ampio raggio, ad assorbire notevoli quantità di dati, che poi traduce in progetti e programmi. Larga parte dei condottieri di eserciti o di Stati appartengono a questo tipo: Giulio Cesare, Carlo Magno, Napoleone; e così pure scopritori come Marco Polo e C. R. Darwin, e scrittori come Manzoni, Petrarca, Goethe.\n\nEssendo un Tipo Razionale, affronta le situazioni con grande concretezza e pragmatismo: il suo pensiero è asciutto, essenziale, indirizzato costantemente verso la meta. Ha un\'ottima capacità di tenere conversazioni e di dibattere.\n\nProfessioni consone: Leader, Capo di Stato, Imprenditore, Direttore Generale, Architetto di grandi progetti, Rettore e Professore universitario, Medico Primario, Scrittore, Avvocato, Politico, Ministro, Banchiere.'
-  );
+  setText('prof-panoramica', rag('panoramica',
+    'Profilo in caricamento dal database...'
+  ));
 
   // SEZ 2 — Punti di forza / Aree di miglioramento
-  setList('col-forza', [
-    'Profondità di analisi e rigore logico',
-    'Creatività concettuale e visione d\'insieme',
-    'Integrità intellettuale e coerenza',
-    'Capacità di leadership e direzione',
-    'Abilità nel dibattito e nella comunicazione',
-    'Orientamento ai risultati concreti',
-    'Pensiero sviluppante e innovativo'
-  ]);
-  setList('col-miglioramento', [
-    'Può isolarsi o rimandare l\'azione',
-    'Rischio di sentirsi al di sopra degli altri',
-    'Tendenza all\'onnipotenza se non bilanciata',
-    'Difficoltà a occuparsi dei sentimenti propri e altrui',
-    'Può mettere in secondo piano punti di vista diversi',
-    'Suscettibilità inconscia che rende il tono aspro',
-    'Può sviluppare pregiudizi verso chi si oppone'
-  ]);
+  // Il RAG restituisce testo, lo suddividiamo in righe per la lista
+  const toList = txt => txt ? txt.split('\n').map(s=>s.replace(/^[-•·*]\s*/,'')).filter(s=>s.trim().length>5) : [];
+  setList('col-forza',       toList(rag('punti_forza', '')));
+  setList('col-miglioramento', toList(rag('aree_miglioramento', '')));
 
   // SEZ 3 — Funzioni psicologiche
-  setText('prof-funzione-fondamentale',
-    'La funzione dominante è la componente della personalità più differenziata e cosciente. Emergendo già nell\'infanzia, diventa la via privilegiata con cui percepiamo o giudichiamo il mondo e plasma la nostra identità. Una dominante ben integrata ci dona sicurezza e chiarezza di intenti; quando la assolutizziamo, rischiamo di diventare unilaterali, rigidi o dogmatici.'
-  );
-  setText('prof-funzione-ausiliaria',
-    'La funzione ausiliaria nasce dopo la dominante e la sostiene senza contraddirla. Deve essere di natura diversa: se la dominante è razionale (Pensiero o Sentimento) l\'ausiliaria sarà irrazionale (Sensazione o Intuizione), e viceversa. Permette di adattarci a contesti diversi, di temperare la nostra prospettiva e di integrare punti di vista complementari.'
-  );
-  setText('prof-funzione-mediatrice',
-    'La funzione terziaria (o mediatrice) svolge un ruolo di ponte tra coscienza e inconscio. Spesso si esprime in modo spontaneo, ludico o creativo, attraverso hobby e attività artistiche. Il suo pieno sviluppo tende a emergere più tardi nella vita, quando iniziamo a esplorare aspetti poco valorizzati di noi stessi.'
-  );
-  setText('prof-funzione-inferiore',
-    'La funzione inferiore è la meno cosciente e rimane per lo più nell\'inconscio. È l\'opposto della funzione dominante e si manifesta spesso in modo primitivo o incontrollato: emozioni esplosive, impulsi improvvisi o paure irrazionali. Pur generando tensione e disagio, contiene una riserva di vitalità e creatività. La sua integrazione permette di riconoscere le proprie parti d\'ombra e raggiungere un equilibrio interiore più maturo.'
-  );
+  setText('prof-funzione-fondamentale', rag('funzione_dominante', ''));
+  setText('prof-funzione-ausiliaria',   rag('funzione_ausiliaria', ''));
+  setText('prof-funzione-mediatrice',   rag('funzione_mediatrice', ''));
+  setText('prof-funzione-inferiore',    rag('funzione_inferiore', ''));
 
   // SEZ 4 — Dinamica di evoluzione (3 colonne)
-  setList('dyn-col1', [
-    'Analizza, costruisce, crea nuove sintesi e concetti',
-    'È creativo, porta nuovi fatti e interpretazioni',
-    'Abolisce le considerazioni personali e soggettive',
-    'Esercita grande influenza sull\'ambiente circostante',
-    'Usa molto bene il linguaggio',
-    'L\'atteggiamento esprime impersonalità',
-    'Approfondisce i dettagli',
-    'Tende a definire un ordine per chiarire situazioni',
-    'Porta l\'attenzione sui fatti, non sulle persone',
-    'Può passare molto tempo a risolvere problemi',
-    'Formula i fatti con chiarezza',
-    'Tende a parlare di dati e fatti obiettivi',
-    'Valuta bene e male in base alla realtà obiettiva',
-    'Si fa una mappa della realtà abbastanza rigida',
-    'Può assumere il ruolo di custode della moralità'
-  ]);
-  setList('dyn-col2', [
-    'Errata interpretazione delle possibili opposizioni',
-    'Sviluppa pregiudizi negativi verso chi si oppone',
-    'Suscettibilità inconscia rende il tono aspro',
-    'Tendenza al risentimento e all\'incostanza',
-    'Evita di occuparsi dei sentimenti',
-    'I dubbi inconsci alimentano il fanatismo',
-    'Il pensiero ristagna e rumina',
-    'Perde creatività',
-    'Banalizza e spoglia di ogni valore persone e cose',
-    'Può spingere ad atti estremi a difesa degli ideali',
-    'Può emergere in atti di fanatismo improvviso'
-  ]);
-  setList('dyn-col3', [
-    'Come funzione inferiore è molto nascosta e profonda',
-    'Vulnerabilità dei sentimenti',
-    'Spinge a stabilire alleanze invisibili e stabili',
-    'Porta a sviluppare lealtà profondamente radicata',
-    'I sentimenti sono spesso infantili',
-    'Mal sopporta la solitudine',
-    'Ciò che viene rimosso sui sentimenti crea dubbi',
-    'Attaccamento radicato verso ideali e persone, ma inconscio'
-  ]);
+  // Il RAG restituisce un testo unico, lo mettiamo nella colonna centrale
+  // Le colonne laterali mostrano il nome della funzione dominante e inferiore
+  const fn = parseSigla(d.sigla);
+  document.getElementById('dyn-col1-title').textContent = fn.primaria + ' — Caratteristiche';
+  document.getElementById('dyn-col3-title').textContent = fn.inferiore + ' — Come funzione inferiore';
+  const dynText = rag('dinamica_evoluzione', '');
+  // Dividiamo il testo in tre parti approssimativamente
+  const dynLines = dynText.split('\n').filter(s=>s.trim().length>5);
+  const third = Math.ceil(dynLines.length / 3);
+  setList('dyn-col1', dynLines.slice(0, third));
+  setList('dyn-col2', dynLines.slice(third, third*2));
+  setList('dyn-col3', dynLines.slice(third*2));
 
   // SEZ 5 — Funzione prevalente e collaborante
-  setText('prof-prevalente-intro',
-    'La funzione assume carattere diverso a seconda che operi come funzione Prevalente o come funzione Collaborante. La Prevalente è la funzione cosciente che guida l\'individuo nell\'approccio alle situazioni. La Collaborante ha un compito essenziale: quando la Prevalente è razionale, la Collaborante è irrazionale, e viceversa. Tutti abbiamo bisogno di entrambi gli approcci per una visione della vita più completa.'
-  );
-  setText('prof-prevalente',
-    'La funzione P Pensiero Prevalente esprime un pensiero razionale sviluppante. Il P Pensiero estroverso Prevalente è rivolto costantemente all\'esterno di sé, focalizzato sull\'oggetto da sviluppare. Procede con rigore logico, con un andamento costante, progressivo, lineare.\n\nIl P Pensiero introverso (EPS, EPN) perde una certa percentuale di obiettività, sostituita dall\'inserimento del punto di vista soggettivo. Se da un lato si rivela meno obiettivo, dall\'altro aggiunge qualcosa di proprio, che coglie dalla sua esperienza diretta e dalla conoscenza di fatti simili situati nella psiche personale e collettiva.'
-  );
-  setText('prof-collaborante',
-    'La funzione P Pensiero Collaborante è un pensiero razionale prevalentemente ruminante, analizzante. Agisce in concomitanza con la funzione irrazionale prevalente (N Intuizione) e analizza razionalmente quanto la funzione N ha percepito, riflettendo sulle informazioni fornite.\n\nNel tipo N Intuizione, il P Pensiero Collaborante analizza e rumina sugli elementi nodali che costituiscono lo schema della situazione, muovendosi come un\'auto all\'interno di un circuito prestabilito. In sintesi, analizza e sistema, mette in ordine ciò che la funzione prevalente ha prodotto.'
-  );
+  const prevText = rag('prevalente_collaborante', '');
+  const prevLines = prevText.split('\n\n').filter(s=>s.trim().length>5);
+  setText('prof-prevalente-intro', prevLines[0] || '');
+  setText('prof-prevalente',       prevLines[1] || '');
+  setText('prof-collaborante',     prevLines.slice(2).join('\n\n') || '');
 
   // SEZ 6 — Tipi affini e tipo opposto
-  setText('prof-affini',
-    'Il Tipo IPN (Introverso Pensiero Intuizione) — Competente\n\nL\'IPN si orienta verso il mondo all\'interno di sé. Appare freddo e scostante, ma la sua è più che altro incapacità a esternarsi immediatamente. Il pensiero è fecondo e creatore, concentrato verso un interesse specifico per volta. Viene fuori alla distanza, come un maratoneta, al contrario dell\'EPN che brucia le tappe da giovane. Opera dietro le quinte, di basso profilo.\n\nProfessioni: Direttore Generale, Imprenditore, Scienziato, Filosofo, Scrittore, Medico ricercatore, Ingegnere, Avvocato, Magistrato, Analista informatico.'
-  );
-  setText('prof-opposto',
-    'Il Tipo IPS (Introverso Pensiero Sensazione) — Restauratore\n\nL\'IPS è presente nella realtà che lo circonda, ma rimane protetto all\'interno di sé. Preferisce che a parlare per lui siano i fatti e le azioni. È il restauratore per eccellenza: dove bisogna mettere ordine, risistemare e correggere, ripristina ogni cosa al suo posto con facilità e naturalezza.\n\nIl Pensiero obiettivo combinato con la concretezza della funzione S Sensazione fanno dell\'IPS una persona pratica, accurata, capace di manualità e destrezza.\n\nProfessioni: Medico Chirurgo, Dentista, Giornalista, Restauratore, Ingegnere meccanico, Atleta, Artigiano, Imprenditore piccolo e medio.'
-  );
+  setText('prof-affini',   rag('tipi_affini', ''));
+  setText('prof-opposto',  rag('tipo_opposto', ''));
 
   // SEZ 7 — Suggerimenti per lo sviluppo
-  setText('prof-sviluppo',
-    'Il percorso di sviluppo e integrazione per questo profilo passa attraverso il riconoscimento graduale della funzione inferiore (Sentimento Introverso). Questa tende a emergere in modo incontrollato nei momenti di stress o di crisi.\n\nPassi concreti:\n• Praticare l\'ascolto attivo nelle relazioni senza orientarsi immediatamente alla soluzione\n• Dedicare spazio alla riflessione su come le proprie decisioni influenzano il benessere altrui\n• Coltivare hobby che coinvolgano il mondo sensoriale ed emotivo\n• Imparare a tollerare l\'ambiguità senza classificarla immediatamente come problema da risolvere\n\nIl riconoscimento dell\'ombra — la parte di sé che tende all\'onnipotenza o al fanatismo — è il contributo più prezioso che questo profilo può fare alla propria crescita.'
-  );
+  setText('prof-sviluppo', rag('sviluppo', ''));
 
   // SEZ 8 — Riconoscere gli altri profili
-  setText('prof-altri',
-    'Gli altri profili con cui questo tipo si relaziona più frequentemente:\n\nEPS (Estroverso Pensiero Sensazione) — Orientato alla concretezza e all\'esecuzione. Comunicare con dati precisi, rispettare le procedure e i dettagli. Evitare astrazioni eccessive.\n\nENF / ENP (Estroverso con Sentimento o Intuizione) — Emotivamente coinvolti, cercano connessione personale. Dedicare tempo alla dimensione relazionale prima di entrare nel merito.\n\nISF / ISN (Introverso con Sentimento) — Riservati, profondi, necessitano di tempo per elaborare. Non forzare risposte immediate; creare spazio di riflessione.\n\nEFS / EFN (Estroverso con Sentimento) — Energici e orientati alle persone. Valorizzare il loro contributo relazionale anche quando la logica sembra prevalere.\n\nIn generale: adattare il registro comunicativo al tipo di interlocutore e valorizzare la complementarità invece di interpretarla come ostacolo.'
-  );
-
+  setText('prof-altri', rag('altri_profili', ''));
 }
 
 async function wakeAndStart(){
