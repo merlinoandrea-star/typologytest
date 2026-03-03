@@ -472,7 +472,6 @@ function renderResult(d){
   // SEZ 4 — Dinamica di evoluzione (3 colonne)
   // Il RAG restituisce un testo unico, lo mettiamo nella colonna centrale
   // Le colonne laterali mostrano il nome della funzione dominante e inferiore
-  const fn = parseSigla(d.sigla);
   document.getElementById('dyn-col1-title').textContent = fn.primaria + ' — Caratteristiche';
   document.getElementById('dyn-col3-title').textContent = fn.inferiore + ' — Come funzione inferiore';
   const dynText = rag('dinamica_evoluzione', '');
