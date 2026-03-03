@@ -43,8 +43,9 @@ FUNCTION_NAMES_IT = {
 }
 
 def rag_ask(question: str, top_k: int = 5) -> str:
-    """Interroga il RAG HumanTypology e restituisce la risposta testuale."""
+    """Interroga il RAG, recupera i chunk e sintetizza la risposta con Claude."""
     try:
+        # 1. Recupera i chunk dal RAG
         resp = httpx.post(
             f"{HUMTYPO_URL}/ask",
             json={"question": question, "top_k": top_k},
@@ -52,9 +53,42 @@ def rag_ask(question: str, top_k: int = 5) -> str:
             timeout=30.0
         )
         resp.raise_for_status()
-        return resp.json().get("answer", "")
+        data = resp.json()
+
+        # 2. Se il RAG ha già una risposta usala
+        if data.get("answer"):
+            return data["answer"]
+
+        # 3. Altrimenti sintetizza i chunk con Claude
+        chunks = data.get("chunks", [])
+        if not chunks:
+            return ""
+
+        context = "\n\n---\n\n".join(c["text"] for c in chunks if c.get("text"))
+        if not context.strip():
+            return ""
+
+        if not client:
+            return context[:500]
+
+        synthesis = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=800,
+            system=(
+                "Sei un esperto di psicologia junghiana e tipologia dei tipi psicologici. "
+                "Rispondi in italiano in modo chiaro, discorsivo e professionale. "
+                "Usa esclusivamente le informazioni fornite nel contesto. "
+                "Non inventare informazioni non presenti nel contesto."
+            ),
+            messages=[{
+                "role": "user",
+                "content": f"Contesto estratto dalla biblioteca junghiana:\n\n{context}\n\nDomanda: {question}\n\nRispondi in modo completo e discorsivo basandoti sul contesto."
+            }]
+        )
+        return synthesis.content[0].text
+
     except Exception as e:
-        return f"[RAG non disponibile: {e}]"
+        return f"[Errore: {e}]"
 
 def build_profile_sections(type_code: str, orientation: str, dominant: str,
                             auxiliary: str, inferior: str, otroversion: str) -> dict:
