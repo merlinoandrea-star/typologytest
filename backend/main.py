@@ -252,7 +252,15 @@ Scrivi 3-4 frasi che descrivono il profilo in modo chiaro e autorevole.
 Inizia con: "Il tuo profilo è {result['sigla']}."
 Non usare frasi motivazionali generiche. Sii preciso e concreto."""
 
-        messages = data.conversation_history + [{"role": "user", "content": data.message}]
+       # Filtra messaggi con content vuoto o mancante
+clean_history = [
+    m for m in data.conversation_history
+    if isinstance(m, dict)
+    and m.get("role") in ("user", "assistant")
+    and m.get("content")
+    and str(m.get("content")).strip()
+]
+messages = clean_history + [{"role": "user", "content": data.message}]
 
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
