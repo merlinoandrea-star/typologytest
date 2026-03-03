@@ -8,245 +8,138 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#1F2A44;
-  --accent:#3E5CFF;
-  --bg:#F8F9FB;
-  --text:#1F2A44;
-  --text-secondary:#4A4F5A;
-  --gold:#C8A75D;
-  --border:#E2E6EE;
-  --white:#FFFFFF;
-  --surface:#F0F3F9;
-  --shadow:0 2px 16px rgba(31,42,68,0.08);
+  --primary:#1F2A44;--accent:#3E5CFF;--bg:#F8F9FB;--text:#1F2A44;
+  --text-secondary:#4A4F5A;--gold:#C8A75D;--border:#E2E6EE;
+  --white:#FFFFFF;--surface:#F0F3F9;--shadow:0 2px 16px rgba(31,42,68,0.08);
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-weight:400;-webkit-font-smoothing:antialiased}
 
-/* ── LOADING ── */
-#loading-screen{
-  position:fixed;inset:0;
-  background:linear-gradient(135deg,#1F2A44 0%,#2a3a60 60%,#3E5CFF 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:2.5rem;z-index:100;transition:opacity 0.7s ease;
-}
+/* LOADING */
+#loading-screen{position:fixed;inset:0;background:linear-gradient(135deg,#1F2A44 0%,#2a3a60 60%,#3E5CFF 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;z-index:100;transition:opacity 0.7s ease}
 #loading-screen.fade-out{opacity:0;pointer-events:none}
-.loading-logo{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(2rem,5vw,3rem);
-  font-weight:400;letter-spacing:0.25em;
-  color:#F8F9FB;
-}
+.loading-logo{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3rem);font-weight:400;letter-spacing:0.25em;color:#F8F9FB}
 .loading-logo span{color:var(--gold);font-size:0.6em;letter-spacing:0.4em;display:block;margin-top:0.3rem;font-family:'Inter',sans-serif;font-weight:300;text-transform:uppercase}
 .loading-bar-wrap{width:200px;height:2px;background:rgba(255,255,255,0.15);border-radius:2px;overflow:hidden}
 .loading-bar-fill{height:100%;background:var(--accent);animation:loadSlide 3s ease forwards;width:0}
 @keyframes loadSlide{to{width:100%}}
 .loading-text{font-size:0.72rem;letter-spacing:0.2em;color:rgba(248,249,251,0.5);text-transform:uppercase;font-weight:300}
 
-/* ── APP ── */
+/* APP */
 #app{display:none;height:100vh;flex-direction:column}
 #app.visible{display:flex}
 
-/* ── HEADER ── */
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 2.5rem;height:64px;
-  background:var(--primary);
-  flex-shrink:0;
-}
-.logo{
-  font-family:'Playfair Display',serif;
-  font-size:1.3rem;font-weight:500;
-  letter-spacing:0.15em;color:#F8F9FB;
-}
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:64px;background:var(--primary);flex-shrink:0}
+.logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:500;letter-spacing:0.15em;color:#F8F9FB}
 .logo-dot{color:var(--gold);margin-left:2px}
 .progress-wrap{display:flex;align-items:center;gap:1.2rem}
 .progress-count{font-size:0.72rem;letter-spacing:0.12em;color:rgba(248,249,251,0.5);font-weight:300;text-transform:uppercase}
 .progress-track{width:120px;height:2px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden}
 .progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.5s ease;width:0%}
 
-/* ── MAIN ── */
+/* MAIN */
 main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
-/* ── CHAT AREA ── */
+/* CHAT */
 #chat-view{display:flex;flex-direction:column;flex:1;overflow:hidden}
-
-#messages{
-  flex:1;overflow-y:auto;
-  padding:2.5rem;
-  display:flex;flex-direction:column;gap:1.5rem;
-  scroll-behavior:smooth;
-}
+#messages{flex:1;overflow-y:auto;padding:2.5rem;display:flex;flex-direction:column;gap:1.5rem;scroll-behavior:smooth}
 #messages::-webkit-scrollbar{width:4px}
 #messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-
 .msg{display:flex;gap:1rem;animation:msgIn 0.35s ease both}
 @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .msg.user{flex-direction:row-reverse}
-
-.avatar{
-  width:38px;height:38px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;margin-top:2px;font-size:0.85rem;font-weight:500;
-}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-size:0.85rem;font-weight:500}
 .avatar.sofia{background:var(--primary);color:var(--gold)}
 .avatar.user-av{background:var(--accent);color:#fff}
-
-.bubble{
-  max-width:65%;padding:1rem 1.25rem;
-  line-height:1.7;font-size:0.92rem;
-  border-radius:12px;
-}
-.msg.sofia .bubble{
-  background:var(--white);
-  border:1px solid var(--border);
-  color:var(--text);
-  box-shadow:var(--shadow);
-}
-.msg.user .bubble{
-  background:var(--primary);
-  color:#F8F9FB;
-  border-radius:12px 12px 4px 12px;
-}
-
-/* ── TYPING ── */
+.bubble{max-width:65%;padding:1rem 1.25rem;line-height:1.7;font-size:0.92rem;border-radius:12px}
+.msg.sofia .bubble{background:var(--white);border:1px solid var(--border);color:var(--text);box-shadow:var(--shadow)}
+.msg.user .bubble{background:var(--primary);color:#F8F9FB;border-radius:12px 12px 4px 12px}
 .typing{display:flex;align-items:center;gap:5px;padding:4px 0}
 .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite}
-.dot:nth-child(2){animation-delay:0.2s}
-.dot:nth-child(3){animation-delay:0.4s}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
 @keyframes pulse{0%,60%,100%{opacity:0.25;transform:scale(0.8)}30%{opacity:1;transform:scale(1)}}
 
-/* ── INPUT AREA ── */
-#input-area{
-  padding:1.5rem 2.5rem;
-  border-top:1px solid var(--border);
-  background:var(--white);
-  flex-shrink:0;
-}
-
+/* INPUT */
+#input-area{padding:1.5rem 2.5rem;border-top:1px solid var(--border);background:var(--white);flex-shrink:0}
 #choice-buttons{display:flex;gap:1rem;margin-bottom:1rem}
-.choice-btn{
-  flex:1;padding:0.85rem 1rem;
-  border:1.5px solid var(--border);
-  background:var(--bg);color:var(--text);
-  font-family:'Inter',sans-serif;font-size:0.82rem;
-  font-weight:500;letter-spacing:0.08em;
-  cursor:pointer;border-radius:8px;
-  transition:all 0.2s ease;
-  text-transform:uppercase;
-}
+.choice-btn{flex:1;padding:0.85rem 1rem;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.08em;cursor:pointer;border-radius:8px;transition:all 0.2s ease;text-transform:uppercase}
 .choice-btn:hover{background:var(--primary);color:#F8F9FB;border-color:var(--primary);transform:translateY(-1px);box-shadow:0 4px 12px rgba(31,42,68,0.15)}
 .choice-btn.selected{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 12px rgba(62,92,255,0.25)}
-
 .input-row{display:flex;gap:0.75rem}
-#user-input{
-  flex:1;padding:0.85rem 1.1rem;
-  border:1.5px solid var(--border);
-  background:var(--bg);color:var(--text);
-  font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:400;
-  border-radius:8px;outline:none;
-  transition:border-color 0.2s,box-shadow 0.2s;
-}
+#user-input{flex:1;padding:0.85rem 1.1rem;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:400;border-radius:8px;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
 #user-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(62,92,255,0.1)}
 #user-input::placeholder{color:#9BA3B2}
-
-#send-btn{
-  width:46px;height:46px;
-  background:var(--accent);border:none;
-  border-radius:8px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:all 0.2s;flex-shrink:0;
-  box-shadow:0 2px 8px rgba(62,92,255,0.3);
-}
+#send-btn{width:46px;height:46px;background:var(--accent);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;box-shadow:0 2px 8px rgba(62,92,255,0.3)}
 #send-btn:hover{background:#2d4ae0;transform:translateY(-1px);box-shadow:0 4px 12px rgba(62,92,255,0.4)}
 #send-btn svg{width:18px;height:18px;fill:#fff}
 #send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
 .hint{margin-top:0.6rem;font-size:0.7rem;letter-spacing:0.1em;color:#9BA3B2;text-align:center;text-transform:uppercase}
 
-/* ── RESULT ── */
+/* RESULT */
 #result-panel{display:none;flex:1;overflow-y:auto;background:var(--bg);animation:msgIn 0.5s ease}
 #result-panel.visible{display:block}
+.result-hero{background:linear-gradient(135deg,#1F2A44 0%,#2a3a60 100%);padding:4rem 2.5rem 3rem;text-align:center}
+.result-eyebrow{font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);margin-bottom:1.25rem;font-weight:400}
+.result-sigla{font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3rem);font-weight:400;color:#F8F9FB;letter-spacing:0.1em;margin-bottom:1.5rem}
 
-.result-hero{
-  background:linear-gradient(135deg,#1F2A44 0%,#2a3a60 100%);
-  padding:4rem 2.5rem 3rem;
-  text-align:center;
-}
-.result-eyebrow{
-  font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;
-  color:var(--gold);margin-bottom:1.25rem;font-weight:400;
-}
-.result-sigla{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(2rem,5vw,3rem);
-  font-weight:400;color:#F8F9FB;
-  letter-spacing:0.1em;margin-bottom:1rem;
-}
-.result-subtitle{
-  font-size:0.85rem;color:rgba(248,249,251,0.6);
-  letter-spacing:0.05em;line-height:1.6;
-  max-width:500px;margin:0 auto 1.5rem;
-}
-.otroversion-badge{
-  display:inline-flex;align-items:center;gap:0.5rem;
-  padding:0.45rem 1.1rem;
-  border:1px solid var(--gold);border-radius:20px;
-  font-size:0.72rem;letter-spacing:0.18em;
-  text-transform:uppercase;color:var(--gold);
-}
+/* Funzioni strutturate */
+.result-funzioni{display:flex;flex-direction:column;gap:0.45rem;max-width:360px;margin:0 auto 1.5rem}
+.result-fn-row{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 1rem;background:rgba(255,255,255,0.07);border-radius:8px;border:1px solid rgba(255,255,255,0.1)}
+.result-fn-label{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(248,249,251,0.45);font-weight:400}
+.result-fn-value{font-size:0.85rem;font-weight:500;color:#F8F9FB}
+
+.otroversion-badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.45rem 1.1rem;border:1px solid var(--gold);border-radius:20px;font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold)}
 
 .result-body{max-width:680px;margin:0 auto;padding:3rem 2.5rem}
-
-.result-card{
-  background:var(--white);border-radius:12px;
-  padding:2rem;margin-bottom:1.5rem;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
-.card-label{
-  font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;
-  color:var(--accent);font-weight:500;margin-bottom:1rem;
-}
-.card-title{
-  font-family:'Playfair Display',serif;
-  font-size:1.1rem;font-weight:500;
-  color:var(--primary);margin-bottom:0.75rem;line-height:1.4;
-}
+.result-card{background:var(--white);border-radius:12px;padding:2rem;margin-bottom:1.5rem;border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-label{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:1rem}
 .card-text{font-size:0.92rem;line-height:1.75;color:var(--text-secondary)}
 
 .scores-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
-.score-item{}
 .score-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.35rem}
 .score-name{font-size:0.78rem;font-weight:500;color:var(--text)}
 .score-val{font-size:0.72rem;color:var(--text-secondary);font-weight:400}
 .score-track{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
 .score-bar{height:100%;background:linear-gradient(90deg,var(--accent),#6b87ff);border-radius:2px;transition:width 1s ease 0.3s;width:0%}
-
-.restart-btn{
-  display:block;width:100%;
-  padding:1rem;margin-top:2rem;
-  border:1.5px solid var(--primary);
-  background:transparent;color:var(--primary);
-  font-family:'Inter',sans-serif;font-size:0.8rem;
-  font-weight:500;letter-spacing:0.15em;text-transform:uppercase;
-  cursor:pointer;border-radius:8px;
-  transition:all 0.2s;
-}
+.profile-section{padding:1.5rem 0;border-bottom:1px solid var(--border)}
+.profile-section:last-child{border-bottom:none;padding-bottom:0}
+.profile-section-title{font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:0.75rem}
+.profile-section-text{font-size:0.92rem;line-height:1.8;color:var(--text-secondary);white-space:pre-line}
+.col-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:0.5rem}
+.col-block{background:var(--surface);border-radius:10px;padding:1.25rem 1rem}
+.col-block-title{font-size:0.65rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:var(--primary);margin-bottom:0.75rem}
+.col-block ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.45rem}
+.col-block ul li{font-size:0.88rem;line-height:1.6;color:var(--text-secondary);padding-left:1rem;position:relative}
+.col-block ul li::before{content:'·';position:absolute;left:0;color:var(--accent);font-weight:700}
+.col-block.col-excess{background:rgba(200,167,93,0.07);border:1px solid rgba(200,167,93,0.2)}
+.col-block.col-excess .col-block-title{color:var(--gold)}
+.col-block.col-excess ul li::before{color:var(--gold)}
+.col-dyn{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:0.5rem}
+.col-dyn-block{background:var(--surface);border-radius:10px;padding:1.1rem 1rem}
+.col-dyn-block.center-col{background:rgba(200,167,93,0.07);border:1px solid rgba(200,167,93,0.2)}
+.col-dyn-block .col-block-title{font-size:0.65rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.6rem}
+.col-dyn-block.center-col .col-block-title{color:var(--gold)}
+.col-dyn-block ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0.4rem}
+.col-dyn-block ul li{font-size:0.82rem;line-height:1.55;color:var(--text-secondary);padding-left:0.9rem;position:relative}
+.col-dyn-block ul li::before{content:'·';position:absolute;left:0;color:var(--accent);font-weight:700}
+.col-dyn-block.center-col ul li::before{color:var(--gold)}
+.scores-divider{grid-column:1/-1;height:1px;background:var(--border);margin:0.5rem 0}
+.score-val-ot{font-size:0.78rem !important;font-weight:600 !important}
+.ot-display{display:flex;flex-direction:column;gap:0.6rem}
+.ot-value{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:500}
+.ot-desc{font-size:0.88rem;line-height:1.65;color:var(--text-secondary)}
+@media(max-width:640px){.scores-grid{grid-template-columns:1fr}.col-grid{grid-template-columns:1fr}.col-dyn{grid-template-columns:1fr}}
+.restart-btn{display:block;width:100%;padding:1rem;margin-top:2rem;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font-family:'Inter',sans-serif;font-size:0.8rem;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;border-radius:8px;transition:all 0.2s}
 .restart-btn:hover{background:var(--primary);color:#F8F9FB}
 
-/* ── TOAST ── */
-#error-toast{
-  display:none;position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
-  background:#C0392B;color:#fff;
-  padding:0.75rem 1.5rem;border-radius:8px;
-  font-size:0.82rem;z-index:200;white-space:nowrap;
-  box-shadow:0 4px 16px rgba(0,0,0,0.2);
-}
+/* TOAST */
+#error-toast{display:none;position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#C0392B;color:#fff;padding:0.75rem 1.5rem;border-radius:8px;font-size:0.82rem;z-index:200;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.2)}
 
 @media(max-width:640px){
   header{padding:0 1.25rem}
   #messages,#input-area{padding:1.25rem}
   .bubble{max-width:85%}
   #choice-buttons{flex-direction:column}
-  .scores-grid{grid-template-columns:1fr}
   .result-hero{padding:3rem 1.5rem 2rem}
   .result-body{padding:2rem 1.25rem}
 }
@@ -255,10 +148,7 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--
 <body>
 
 <div id="loading-screen">
-  <div class="loading-logo">
-    Typology
-    <span>Scopri il tuo profilo</span>
-  </div>
+  <div class="loading-logo">Typology<span>Scopri il tuo profilo</span></div>
   <div class="loading-bar-wrap"><div class="loading-bar-fill"></div></div>
   <div class="loading-text" id="loading-text">Connessione in corso…</div>
 </div>
@@ -271,7 +161,6 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--
       <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
     </div>
   </header>
-
   <main>
     <div id="chat-view">
       <div id="messages"></div>
@@ -294,18 +183,142 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--
       <div class="result-hero">
         <div class="result-eyebrow">Il tuo profilo tipologico</div>
         <div class="result-sigla" id="res-sigla">—</div>
-        <div class="result-subtitle" id="res-subtitle"></div>
+        <div class="result-funzioni">
+          <div class="result-fn-row">
+            <span class="result-fn-label">Orientamento</span>
+            <span class="result-fn-value" id="fn-orientamento">—</span>
+          </div>
+          <div class="result-fn-row">
+            <span class="result-fn-label">Funzione primaria</span>
+            <span class="result-fn-value" id="fn-primaria">—</span>
+          </div>
+          <div class="result-fn-row">
+            <span class="result-fn-label">Funzione ausiliaria</span>
+            <span class="result-fn-value" id="fn-ausiliaria">—</span>
+          </div>
+          <div class="result-fn-row">
+            <span class="result-fn-label">Funzione inferiore</span>
+            <span class="result-fn-value" id="fn-inferiore">—</span>
+          </div>
+        </div>
         <div class="otroversion-badge" id="res-otroversion">—</div>
       </div>
       <div class="result-body">
-        <div class="result-card">
-          <div class="card-label">Descrizione del profilo</div>
-          <div class="card-text" id="res-desc"></div>
-        </div>
+
+        <!-- PUNTEGGI -->
         <div class="result-card">
           <div class="card-label">Punteggi per dimensione</div>
           <div class="scores-grid" id="res-scores"></div>
         </div>
+
+        <!-- SEZ 1: IL TUO TIPO -->
+        <div class="result-card">
+          <div class="card-label">Il tuo tipo</div>
+          <div class="profile-section">
+            <div class="profile-section-text" id="prof-panoramica">—</div>
+          </div>
+        </div>
+
+        <!-- SEZ 2: PUNTI DI FORZA / AREE DI MIGLIORAMENTO (colonne) -->
+        <div class="result-card">
+          <div class="card-label">Punti di forza e aree di miglioramento</div>
+          <div class="col-grid">
+            <div class="col-block">
+              <div class="col-block-title">Punti di forza</div>
+              <ul id="col-forza"></ul>
+            </div>
+            <div class="col-block col-excess">
+              <div class="col-block-title">Aree di miglioramento</div>
+              <ul id="col-miglioramento"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEZ 3: FUNZIONI PSICOLOGICHE -->
+        <div class="result-card">
+          <div class="card-label">Funzioni psicologiche</div>
+          <div class="profile-section">
+            <div class="profile-section-title">Funzione dominante</div>
+            <div class="profile-section-text" id="prof-funzione-fondamentale">—</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-title">Funzione ausiliaria</div>
+            <div class="profile-section-text" id="prof-funzione-ausiliaria">—</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-title">Funzione mediatrice</div>
+            <div class="profile-section-text" id="prof-funzione-mediatrice">—</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-title">Funzione inferiore</div>
+            <div class="profile-section-text" id="prof-funzione-inferiore">—</div>
+          </div>
+        </div>
+
+        <!-- SEZ 4: DINAMICA DI EVOLUZIONE (3 colonne) -->
+        <div class="result-card">
+          <div class="card-label">Dinamica di evoluzione delle funzioni</div>
+          <div class="col-dyn">
+            <div class="col-dyn-block">
+              <div class="col-block-title" id="dyn-col1-title">Pensiero Estroverso</div>
+              <ul id="dyn-col1"></ul>
+            </div>
+            <div class="col-dyn-block center-col">
+              <div class="col-block-title">Eccesso</div>
+              <ul id="dyn-col2"></ul>
+            </div>
+            <div class="col-dyn-block">
+              <div class="col-block-title" id="dyn-col3-title">Sentimento Introverso</div>
+              <ul id="dyn-col3"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEZ 5: FUNZIONE DOMINANTE E AUSILIARIA DEL PROFILO SPECIFICO -->
+        <div class="result-card">
+          <div class="card-label">Funzione prevalente e collaborante — ENTS</div>
+          <div class="profile-section">
+            <div class="profile-section-text" id="prof-prevalente-intro">—</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-title">La funzione P Pensiero Prevalente</div>
+            <div class="profile-section-text" id="prof-prevalente">—</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-title">La funzione P Pensiero Collaborante</div>
+            <div class="profile-section-text" id="prof-collaborante">—</div>
+          </div>
+        </div>
+
+        <!-- SEZ 6: TIPI AFFINI E TIPO OPPOSTO -->
+        <div class="result-card">
+          <div class="card-label">Tipi affini e tipo opposto</div>
+          <div class="profile-section">
+            <div class="profile-section-title">Tipi affini — IPN (Introverso Pensiero Intuizione)</div>
+            <div class="profile-section-text" id="prof-affini">—</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-section-title">Tipo opposto — IPS (Introverso Pensiero Sensazione)</div>
+            <div class="profile-section-text" id="prof-opposto">—</div>
+          </div>
+        </div>
+
+        <!-- SEZ 7: SUGGERIMENTI PER LO SVILUPPO -->
+        <div class="result-card">
+          <div class="card-label">Suggerimenti per lo sviluppo</div>
+          <div class="profile-section">
+            <div class="profile-section-text" id="prof-sviluppo">—</div>
+          </div>
+        </div>
+
+        <!-- SEZ 8: RICONOSCERE GLI ALTRI PROFILI -->
+        <div class="result-card">
+          <div class="card-label">Riconoscere gli altri profili</div>
+          <div class="profile-section">
+            <div class="profile-section-text" id="prof-altri">—</div>
+          </div>
+        </div>
+
         <button class="restart-btn" onclick="location.reload()">Ricomincia il test</button>
       </div>
     </div>
@@ -317,6 +330,12 @@ main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--
 <script>
 const API = 'https://typologytest.onrender.com';
 let conversationHistory = [], responses = {}, currentQuestionIndex = 0, isWaiting = false;
+
+const LABEL_MAP = {
+  E:'Estroverso', I:'Introverso',
+  N:'Intuizione', S:'Sensazione',
+  T:'Pensiero',   F:'Sentimento'
+};
 
 function showError(msg){const t=document.getElementById('error-toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',4000)}
 function updateProgress(n){document.getElementById('progress-fill').style.width=Math.round(n/72*100)+'%';document.getElementById('progress-label').textContent=n+' / 72'}
@@ -396,16 +415,149 @@ async function loadAndShowResult(){
   catch(e){document.getElementById('res-desc').textContent='Errore nel calcolo del profilo. Ricarica la pagina.';}
 }
 
+function parseSigla(sigla){
+  const p=sigla.split('-');
+  return {
+    orientamento: LABEL_MAP[p[0]]||p[0],
+    primaria:     LABEL_MAP[p[1]]||p[1],
+    ausiliaria:   LABEL_MAP[p[2]]||p[2],
+    inferiore:    LABEL_MAP[p[3]]||p[3],
+  };
+}
+
 function renderResult(d){
   const s=d.scores;
   document.getElementById('res-sigla').textContent=d.sigla;
-  document.getElementById('res-subtitle').textContent=d.nome_esteso;
+  const fn=parseSigla(d.sigla);
+  document.getElementById('fn-orientamento').textContent=fn.orientamento;
+  document.getElementById('fn-primaria').textContent=fn.primaria;
+  document.getElementById('fn-ausiliaria').textContent=fn.ausiliaria;
+  document.getElementById('fn-inferiore').textContent=fn.inferiore;
   document.getElementById('res-otroversion').textContent='◆ '+d.otroversion;
-  document.getElementById('res-desc').textContent=d.profile_description;
+
   const grid=document.getElementById('res-scores');
-  grid.innerHTML=[['Pensiero',s.T],['Sentimento',s.F],['Sensazione',s.S],['Intuizione',s.N],['Estroversione',s.E],['Introversione',s.I]]
-    .map(([l,v])=>`<div class="score-item"><div class="score-row"><span class="score-name">${l}</span><span class="score-val">${v}%</span></div><div class="score-track"><div class="score-bar" data-val="${v}"></div></div></div>`).join('');
+  const otScore = d.otroversion === 'Belonging' ? 100 : 0;
+  const funzioni = [['Pensiero',s.T],['Sentimento',s.F],['Sensazione',s.S],['Intuizione',s.N]];
+  const orientamento = [['Estroversione',s.E],['Introversione',s.I],['Otroversione', d.otroversion === 'Belonging' ? 'Belonging' : 'Not Belonging', true]];
+  const makeBar = ([l,v,isText])=> isText
+    ? `<div class="score-item score-item-ot"><div class="score-row"><span class="score-name">${l}</span><span class="score-val score-val-ot" style="color:${d.otroversion==='Belonging'?'#3E5CFF':'#C8A75D'}">${v}</span></div></div>`
+    : `<div class="score-item"><div class="score-row"><span class="score-name">${l}</span><span class="score-val">${v}%</span></div><div class="score-track"><div class="score-bar" data-val="${v}"></div></div></div>`;
+  grid.innerHTML = funzioni.map(makeBar).join('') + '<div class="scores-divider"></div>' + orientamento.map(makeBar).join('');
   setTimeout(()=>document.querySelectorAll('.score-bar').forEach(b=>b.style.width=b.dataset.val+'%'),300);
+  // Sezioni profilo
+  const setText=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  const setList=(id,items)=>{const el=document.getElementById(id);if(el)el.innerHTML=items.map(i=>`<li>${i}</li>`).join('');};
+
+  // SEZ 1 — Il tuo tipo
+  setText('prof-panoramica',
+    'Il Tipo EPN (Estroverso Pensiero Intuizione) — Condottiero\n\nIl Tipo EPN è orientato verso il mondo esterno e verso gli altri. A guidarlo nelle sue azioni è la funzione P Pensiero prevalente introverso, un pensiero sviluppante, fecondo e creativo, che tende a innovare, a estendersi e a propagarsi in ogni direzione. La funzione N Intuizione collabora con il P Pensiero nel sintetizzare i concetti prodotti, per poi collegarli con altri concetti già a sua disposizione e formare così uno schema sempre più ampio.\n\nLe funzioni P e N, combinate con l\'orientamento Estroverso, portano il Tipo a vedere le cose ad ampio raggio, ad assorbire notevoli quantità di dati, che poi traduce in progetti e programmi. Larga parte dei condottieri di eserciti o di Stati appartengono a questo tipo: Giulio Cesare, Carlo Magno, Napoleone; e così pure scopritori come Marco Polo e C. R. Darwin, e scrittori come Manzoni, Petrarca, Goethe.\n\nEssendo un Tipo Razionale, affronta le situazioni con grande concretezza e pragmatismo: il suo pensiero è asciutto, essenziale, indirizzato costantemente verso la meta. Ha un\'ottima capacità di tenere conversazioni e di dibattere.\n\nProfessioni consone: Leader, Capo di Stato, Imprenditore, Direttore Generale, Architetto di grandi progetti, Rettore e Professore universitario, Medico Primario, Scrittore, Avvocato, Politico, Ministro, Banchiere.'
+  );
+
+  // SEZ 2 — Punti di forza / Aree di miglioramento
+  setList('col-forza', [
+    'Profondità di analisi e rigore logico',
+    'Creatività concettuale e visione d\'insieme',
+    'Integrità intellettuale e coerenza',
+    'Capacità di leadership e direzione',
+    'Abilità nel dibattito e nella comunicazione',
+    'Orientamento ai risultati concreti',
+    'Pensiero sviluppante e innovativo'
+  ]);
+  setList('col-miglioramento', [
+    'Può isolarsi o rimandare l\'azione',
+    'Rischio di sentirsi al di sopra degli altri',
+    'Tendenza all\'onnipotenza se non bilanciata',
+    'Difficoltà a occuparsi dei sentimenti propri e altrui',
+    'Può mettere in secondo piano punti di vista diversi',
+    'Suscettibilità inconscia che rende il tono aspro',
+    'Può sviluppare pregiudizi verso chi si oppone'
+  ]);
+
+  // SEZ 3 — Funzioni psicologiche
+  setText('prof-funzione-fondamentale',
+    'La funzione dominante è la componente della personalità più differenziata e cosciente. Emergendo già nell\'infanzia, diventa la via privilegiata con cui percepiamo o giudichiamo il mondo e plasma la nostra identità. Una dominante ben integrata ci dona sicurezza e chiarezza di intenti; quando la assolutizziamo, rischiamo di diventare unilaterali, rigidi o dogmatici.'
+  );
+  setText('prof-funzione-ausiliaria',
+    'La funzione ausiliaria nasce dopo la dominante e la sostiene senza contraddirla. Deve essere di natura diversa: se la dominante è razionale (Pensiero o Sentimento) l\'ausiliaria sarà irrazionale (Sensazione o Intuizione), e viceversa. Permette di adattarci a contesti diversi, di temperare la nostra prospettiva e di integrare punti di vista complementari.'
+  );
+  setText('prof-funzione-mediatrice',
+    'La funzione terziaria (o mediatrice) svolge un ruolo di ponte tra coscienza e inconscio. Spesso si esprime in modo spontaneo, ludico o creativo, attraverso hobby e attività artistiche. Il suo pieno sviluppo tende a emergere più tardi nella vita, quando iniziamo a esplorare aspetti poco valorizzati di noi stessi.'
+  );
+  setText('prof-funzione-inferiore',
+    'La funzione inferiore è la meno cosciente e rimane per lo più nell\'inconscio. È l\'opposto della funzione dominante e si manifesta spesso in modo primitivo o incontrollato: emozioni esplosive, impulsi improvvisi o paure irrazionali. Pur generando tensione e disagio, contiene una riserva di vitalità e creatività. La sua integrazione permette di riconoscere le proprie parti d\'ombra e raggiungere un equilibrio interiore più maturo.'
+  );
+
+  // SEZ 4 — Dinamica di evoluzione (3 colonne)
+  setList('dyn-col1', [
+    'Analizza, costruisce, crea nuove sintesi e concetti',
+    'È creativo, porta nuovi fatti e interpretazioni',
+    'Abolisce le considerazioni personali e soggettive',
+    'Esercita grande influenza sull\'ambiente circostante',
+    'Usa molto bene il linguaggio',
+    'L\'atteggiamento esprime impersonalità',
+    'Approfondisce i dettagli',
+    'Tende a definire un ordine per chiarire situazioni',
+    'Porta l\'attenzione sui fatti, non sulle persone',
+    'Può passare molto tempo a risolvere problemi',
+    'Formula i fatti con chiarezza',
+    'Tende a parlare di dati e fatti obiettivi',
+    'Valuta bene e male in base alla realtà obiettiva',
+    'Si fa una mappa della realtà abbastanza rigida',
+    'Può assumere il ruolo di custode della moralità'
+  ]);
+  setList('dyn-col2', [
+    'Errata interpretazione delle possibili opposizioni',
+    'Sviluppa pregiudizi negativi verso chi si oppone',
+    'Suscettibilità inconscia rende il tono aspro',
+    'Tendenza al risentimento e all\'incostanza',
+    'Evita di occuparsi dei sentimenti',
+    'I dubbi inconsci alimentano il fanatismo',
+    'Il pensiero ristagna e rumina',
+    'Perde creatività',
+    'Banalizza e spoglia di ogni valore persone e cose',
+    'Può spingere ad atti estremi a difesa degli ideali',
+    'Può emergere in atti di fanatismo improvviso'
+  ]);
+  setList('dyn-col3', [
+    'Come funzione inferiore è molto nascosta e profonda',
+    'Vulnerabilità dei sentimenti',
+    'Spinge a stabilire alleanze invisibili e stabili',
+    'Porta a sviluppare lealtà profondamente radicata',
+    'I sentimenti sono spesso infantili',
+    'Mal sopporta la solitudine',
+    'Ciò che viene rimosso sui sentimenti crea dubbi',
+    'Attaccamento radicato verso ideali e persone, ma inconscio'
+  ]);
+
+  // SEZ 5 — Funzione prevalente e collaborante
+  setText('prof-prevalente-intro',
+    'La funzione assume carattere diverso a seconda che operi come funzione Prevalente o come funzione Collaborante. La Prevalente è la funzione cosciente che guida l\'individuo nell\'approccio alle situazioni. La Collaborante ha un compito essenziale: quando la Prevalente è razionale, la Collaborante è irrazionale, e viceversa. Tutti abbiamo bisogno di entrambi gli approcci per una visione della vita più completa.'
+  );
+  setText('prof-prevalente',
+    'La funzione P Pensiero Prevalente esprime un pensiero razionale sviluppante. Il P Pensiero estroverso Prevalente è rivolto costantemente all\'esterno di sé, focalizzato sull\'oggetto da sviluppare. Procede con rigore logico, con un andamento costante, progressivo, lineare.\n\nIl P Pensiero introverso (EPS, EPN) perde una certa percentuale di obiettività, sostituita dall\'inserimento del punto di vista soggettivo. Se da un lato si rivela meno obiettivo, dall\'altro aggiunge qualcosa di proprio, che coglie dalla sua esperienza diretta e dalla conoscenza di fatti simili situati nella psiche personale e collettiva.'
+  );
+  setText('prof-collaborante',
+    'La funzione P Pensiero Collaborante è un pensiero razionale prevalentemente ruminante, analizzante. Agisce in concomitanza con la funzione irrazionale prevalente (N Intuizione) e analizza razionalmente quanto la funzione N ha percepito, riflettendo sulle informazioni fornite.\n\nNel tipo N Intuizione, il P Pensiero Collaborante analizza e rumina sugli elementi nodali che costituiscono lo schema della situazione, muovendosi come un\'auto all\'interno di un circuito prestabilito. In sintesi, analizza e sistema, mette in ordine ciò che la funzione prevalente ha prodotto.'
+  );
+
+  // SEZ 6 — Tipi affini e tipo opposto
+  setText('prof-affini',
+    'Il Tipo IPN (Introverso Pensiero Intuizione) — Competente\n\nL\'IPN si orienta verso il mondo all\'interno di sé. Appare freddo e scostante, ma la sua è più che altro incapacità a esternarsi immediatamente. Il pensiero è fecondo e creatore, concentrato verso un interesse specifico per volta. Viene fuori alla distanza, come un maratoneta, al contrario dell\'EPN che brucia le tappe da giovane. Opera dietro le quinte, di basso profilo.\n\nProfessioni: Direttore Generale, Imprenditore, Scienziato, Filosofo, Scrittore, Medico ricercatore, Ingegnere, Avvocato, Magistrato, Analista informatico.'
+  );
+  setText('prof-opposto',
+    'Il Tipo IPS (Introverso Pensiero Sensazione) — Restauratore\n\nL\'IPS è presente nella realtà che lo circonda, ma rimane protetto all\'interno di sé. Preferisce che a parlare per lui siano i fatti e le azioni. È il restauratore per eccellenza: dove bisogna mettere ordine, risistemare e correggere, ripristina ogni cosa al suo posto con facilità e naturalezza.\n\nIl Pensiero obiettivo combinato con la concretezza della funzione S Sensazione fanno dell\'IPS una persona pratica, accurata, capace di manualità e destrezza.\n\nProfessioni: Medico Chirurgo, Dentista, Giornalista, Restauratore, Ingegnere meccanico, Atleta, Artigiano, Imprenditore piccolo e medio.'
+  );
+
+  // SEZ 7 — Suggerimenti per lo sviluppo
+  setText('prof-sviluppo',
+    'Il percorso di sviluppo e integrazione per questo profilo passa attraverso il riconoscimento graduale della funzione inferiore (Sentimento Introverso). Questa tende a emergere in modo incontrollato nei momenti di stress o di crisi.\n\nPassi concreti:\n• Praticare l\'ascolto attivo nelle relazioni senza orientarsi immediatamente alla soluzione\n• Dedicare spazio alla riflessione su come le proprie decisioni influenzano il benessere altrui\n• Coltivare hobby che coinvolgano il mondo sensoriale ed emotivo\n• Imparare a tollerare l\'ambiguità senza classificarla immediatamente come problema da risolvere\n\nIl riconoscimento dell\'ombra — la parte di sé che tende all\'onnipotenza o al fanatismo — è il contributo più prezioso che questo profilo può fare alla propria crescita.'
+  );
+
+  // SEZ 8 — Riconoscere gli altri profili
+  setText('prof-altri',
+    'Gli altri profili con cui questo tipo si relaziona più frequentemente:\n\nEPS (Estroverso Pensiero Sensazione) — Orientato alla concretezza e all\'esecuzione. Comunicare con dati precisi, rispettare le procedure e i dettagli. Evitare astrazioni eccessive.\n\nENF / ENP (Estroverso con Sentimento o Intuizione) — Emotivamente coinvolti, cercano connessione personale. Dedicare tempo alla dimensione relazionale prima di entrare nel merito.\n\nISF / ISN (Introverso con Sentimento) — Riservati, profondi, necessitano di tempo per elaborare. Non forzare risposte immediate; creare spazio di riflessione.\n\nEFS / EFN (Estroverso con Sentimento) — Energici e orientati alle persone. Valorizzare il loro contributo relazionale anche quando la logica sembra prevalere.\n\nIn generale: adattare il registro comunicativo al tipo di interlocutore e valorizzare la complementarità invece di interpretarla come ostacolo.'
+  );
+
 }
 
 async function wakeAndStart(){
@@ -420,7 +572,6 @@ async function wakeAndStart(){
   await new Promise(r=>setTimeout(r,400));
   document.getElementById('loading-screen').classList.add('fade-out');
   setTimeout(()=>{document.getElementById('loading-screen').style.display='none';document.getElementById('app').classList.add('visible');},800);
-
   showTyping();
   try{
     const data=await callAPI('/api/chat',{message:'Inizia il test',conversation_history:[],responses:{},current_question_index:0});
@@ -435,6 +586,16 @@ async function wakeAndStart(){
 
 document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
 wakeAndStart();
+
+function simulaRisultato(){
+  const fakeResult={sigla:'E-N-T-S',otroversion:'Not Belonging',profile_description:'',scores:{N:78,T:71,E:68,S:44,F:29,I:32}};
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('chat-view').style.display='none';
+  document.getElementById('result-panel').classList.add('visible');
+  updateProgress(72);
+  renderResult(fakeResult);
+}
 </script>
 
 <!-- ─── DEV BUTTON — RIMUOVERE PRIMA DEL LANCIO ─── -->
@@ -445,24 +606,6 @@ wakeAndStart();
   </button>
 </div>
 
-<script>
-function simulaRisultato() {
-  const fakeResult = {
-    sigla: "E-N-T-S",
-    nome_esteso: "L'Architetto Strategico",
-    otroversion: "Not Belonging",
-    profile_description: "Sei una persona con una visione naturalmente strategica: vedi connessioni dove gli altri vedono caos, e trasformi idee astratte in piani concreti. La tua Intuizione dominante ti spinge costantemente verso nuove possibilità, mentre il Pensiero ausiliario garantisce rigore e coerenza nelle tue decisioni.\n\nIn ambito professionale sei al meglio quando puoi progettare sistemi, guidare trasformazioni o risolvere problemi complessi che richiedono sia creatività che disciplina.",
-    scores: { N: 78, T: 71, E: 68, S: 44, F: 29, I: 32 }
-  };
-  // Mostra il pannello risultati
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-  document.getElementById('chat-view').style.display = 'none';
-  document.getElementById('result-panel').classList.add('visible');
-  updateProgress(72);
-  renderResult(fakeResult);
-}
-</script>
 <!-- ─── FINE DEV BUTTON ─── -->
 
 </body>
