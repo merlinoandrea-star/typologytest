@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: typologytest
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: PORT
+        value: 10000
+```
+
+Poi vai su Render → clicca su **typologytest** → **Settings** → trova il campo **Start Command** e assicurati che sia esattamente:
+```
+uvicorn main:app --host 0.0.0.0 --port $PORT
