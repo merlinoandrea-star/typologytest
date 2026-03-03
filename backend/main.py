@@ -5,12 +5,10 @@ from pydantic import BaseModel
 from typing import Optional
 import anthropic
 import os
-import json
 import traceback
 
 app = FastAPI(title="Typology API")
 
-# CORS esplicito e completo
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,7 +18,6 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Gestione manuale OPTIONS per sicurezza
 @app.options("/{rest_of_path:path}")
 async def preflight_handler(rest_of_path: str):
     return JSONResponse(
@@ -32,13 +29,9 @@ async def preflight_handler(rest_of_path: str):
         }
     )
 
-# Client Anthropic — inizializzato solo se la key esiste
 api_key = os.environ.get("ANTHROPIC_API_KEY")
 client = anthropic.Anthropic(api_key=api_key) if api_key else None
 
-# ─────────────────────────────────────────────────────────────────────────────
-# DATI: 72 domande (60 junghiane + 12 OT)
-# ─────────────────────────────────────────────────────────────────────────────
 QUESTIONS = [
   {"id":1,"scala":"TF","latoA":"T","testoA":"Quando ho bisogno di recuperare energie, preferisco stare da solo.","testoB":"Quando ho bisogno di recuperare energie, mi fa bene parlare o stare con qualcuno."},
   {"id":2,"scala":"TF","latoA":"T","testoA":"Preferisco un linguaggio diretto e ordinato.","testoB":"Preferisco un linguaggio accogliente e che metta a proprio agio."},
@@ -114,9 +107,6 @@ QUESTIONS = [
   {"id":72,"scala":"OT","latoA":"B","testoA":"Quando devo prendere una decisione importante, mi confronto naturalmente con gli altri prima di scegliere.","testoB":"Quando devo prendere una decisione importante, arrivo alla scelta da solo e poi eventualmente la comunico."}
 ]
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SCORING
-# ─────────────────────────────────────────────────────────────────────────────
 INFERIOR = {"T":"F","F":"T","S":"N","N":"S"}
 FUNCTION_NAMES = {"E":"Estroverso","I":"Introverso","T":"Pensiero","F":"Sentimento","S":"Sensazione","N":"Intuizione"}
 
@@ -184,9 +174,6 @@ def calculate_type(responses: dict) -> dict:
         }
     }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# DESCRIZIONI 16 TIPI
-# ─────────────────────────────────────────────────────────────────────────────
 TYPE_PROFILES = {
     "E-TN": "Profilo estroverso con Pensiero come funzione guida e Intuizione a supporto. Strategico e visionario, unisce logica e capacità di proiettarsi nel futuro. La Funzione Inferiore Sentimento rappresenta la sua area di crescita principale.",
     "E-TS": "Profilo estroverso con Pensiero come funzione guida e Sensazione a supporto. Pratico, concreto e orientato ai fatti, ama costruire processi affidabili. La Funzione Inferiore Sentimento è l'area di sviluppo meno consapevole.",
@@ -206,9 +193,6 @@ TYPE_PROFILES = {
     "I-NF": "Profilo introverso con Intuizione come funzione guida e Sentimento a supporto. Profondo e spirituale, percepisce significati archetipici e guida gli altri con visione ed empatia. La Funzione Inferiore Sensazione è la dimensione meno accessibile.",
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MODELLI
-# ─────────────────────────────────────────────────────────────────────────────
 class ChatMessage(BaseModel):
     message: str
     conversation_history: list
@@ -218,9 +202,6 @@ class ChatMessage(BaseModel):
 class SubmitTest(BaseModel):
     responses: dict
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ENDPOINTS
-# ─────────────────────────────────────────────────────────────────────────────
 @app.get("/")
 def root():
     return {"status": "ok", "message": "Typology API v2", "api_key_set": bool(api_key)}
@@ -233,48 +214,49 @@ def get_questions():
 def chat(data: ChatMessage):
     if not client:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY non configurata")
-    
+
     try:
         q_index = data.current_question_index
         responses = data.responses
 
         if q_index < len(QUESTIONS):
             current_q = QUESTIONS[q_index]
-            system_prompt = f"""Sei Sofia, un'assistente empatica e professionale che conduce un test psicologico basato sulla tipologia junghiana.
+            system_prompt = f"""Sei Sofia, una guida professionale che conduce un test psicologico basato sulla tipologia junghiana.
 
-Il tuo ruolo è presentare le domande del test in modo conversazionale, caldo e naturale.
-NON spiegare la teoria junghiana. NON dire all'utente cosa misurano le domande.
-Presenta ogni domanda in modo semplice e diretto.
-Dopo la risposta dell'utente, fai un breve commento neutro (1 frase) e passa alla domanda successiva.
+Il tuo unico compito è presentare la domanda in modo diretto e neutro.
+NON commentare la risposta precedente dell'utente.
+NON fare osservazioni, complimenti o considerazioni di alcun tipo.
+NON spiegare cosa misurano le domande.
+NON usare frasi come "Ottima scelta", "Interessante", "Capisco", "Grazie".
+Presenta esclusivamente la domanda successiva, nient'altro.
 
-Domanda attuale (#{current_q['id']} di 72):
+Domanda {current_q['id']} di 72:
 Opzione A: {current_q['testoA']}
 Opzione B: {current_q['testoB']}
 
-Risposte date finora: {len(responses)}/72
+Formato richiesto: scrivi una sola frase introduttiva brevissima e neutra (es. "Domanda {current_q['id']}."), poi presenta le opzioni A e B su righe separate. Nessun altro testo."""
 
-Presenta questa domanda all'utente chiedendogli di scegliere tra A e B.
-Sii concisa: max 3 righe in totale."""
         else:
             result = calculate_type(responses)
             profile = TYPE_PROFILES.get(result["type_code"], "Profilo in elaborazione.")
             system_prompt = f"""Sei Sofia. Il test è completato.
-Presenta il profilo dell'utente in modo caldo e coinvolgente.
+Presenta il profilo in modo professionale e diretto, senza entusiasmo eccessivo.
 
 Profilo calcolato:
-- Nome completo: {result['nome_titolo']}
+- Sigla: {result['sigla']}
+- Nome completo: {result['nome_esteso']}
 - Descrizione: {profile}
 - Otroversione: {result['otroversion']}
 
-Presenta il risultato in 4-5 frasi, iniziando con "Il tuo profilo è..."
-Poi spiega brevemente cosa significa ciascuna funzione per questa persona.
-Concludi con una frase incoraggiante."""
+Scrivi 3-4 frasi che descrivono il profilo in modo chiaro e autorevole.
+Inizia con: "Il tuo profilo è {result['sigla']}."
+Non usare frasi motivazionali generiche. Sii preciso e concreto."""
 
         messages = data.conversation_history + [{"role": "user", "content": data.message}]
 
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=500,
+            max_tokens=400,
             system=system_prompt,
             messages=messages
         )
