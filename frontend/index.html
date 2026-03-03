@@ -527,14 +527,37 @@ async function wakeAndStart(){
 document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
 wakeAndStart();
 
-function simulaRisultato(){
-  const fakeResult={sigla:'E-N-T-S',otroversion:'Not Belonging',profile_description:'',scores:{N:78,T:71,E:68,S:44,F:29,I:32}};
+async function simulaRisultato(){
+  // Genera 72 risposte fake bilanciate per ottenere E-N-T-S Not Belonging
+  const fakeResponses = Object.fromEntries([
+    ...Array.from({length:12},(_,i)=>[String(i+1),'A']),   // TF: 12A→T
+    ...Array.from({length:12},(_,i)=>[String(i+13),'B']),  // TF: 12B→F  → T vince
+    ...Array.from({length:20},(_,i)=>[String(i+25),'B']),  // SN: 20B→N
+    ...Array.from({length:4}, (_,i)=>[String(i+45),'A']),  // SN: 4A→S   → N vince
+    ...Array.from({length:4}, (_,i)=>[String(i+49),'A']),  // IE: 4A→I
+    ...Array.from({length:8}, (_,i)=>[String(i+53),'B']),  // IE: 8B→E   → E vince
+    ...Array.from({length:4}, (_,i)=>[String(i+61),'B']),  // OT: 4B→NB
+    ...Array.from({length:8}, (_,i)=>[String(i+65),'A']),  // OT: 8A→B   → NB vince
+  ]);
+
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('app').classList.add('visible');
   document.getElementById('chat-view').style.display='none';
   document.getElementById('result-panel').classList.add('visible');
   updateProgress(72);
-  renderResult(fakeResult);
+
+  // Mostra subito una versione base mentre aspetta il RAG
+  const baseResult={sigla:'E-N-T-S',otroversion:'Not Belonging',profile_description:'',
+    scores:{N:78,T:71,E:68,S:44,F:29,I:32},sections:{}};
+  renderResult(baseResult);
+
+  // Chiama il backend reale per ottenere le sezioni dal RAG
+  try {
+    const data = await callAPI('/api/submit', {responses: fakeResponses});
+    renderResult(data);
+  } catch(e) {
+    console.warn('Simula: backend non raggiunto', e);
+  }
 }
 </script>
 
