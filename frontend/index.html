@@ -436,6 +436,7 @@ async function wakeAndStart(){
 document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendMessage();});
 wakeAndStart();
 </script>
+
 <!-- ─── DEV BUTTON — RIMUOVERE PRIMA DEL LANCIO ─── -->
 <div id="dev-banner" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
   <span style="font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#E53E3E;padding:3px 8px;border-radius:4px;">🛠 DEV ONLY</span>
@@ -446,17 +447,23 @@ wakeAndStart();
 
 <script>
 function simulaRisultato() {
-  // Dati di esempio — profilo E-N-T-S
   const fakeResult = {
     sigla: "E-N-T-S",
     nome_esteso: "L'Architetto Strategico",
     otroversion: "Not Belonging",
-    profile_description: "Sei una persona con una visione naturalmente strategica: vedi connessioni dove gli altri vedono caos, e trasformi idee astratte in piani concreti.",
+    profile_description: "Sei una persona con una visione naturalmente strategica: vedi connessioni dove gli altri vedono caos, e trasformi idee astratte in piani concreti. La tua Intuizione dominante ti spinge costantemente verso nuove possibilità, mentre il Pensiero ausiliario garantisce rigore e coerenza nelle tue decisioni.\n\nIn ambito professionale sei al meglio quando puoi progettare sistemi, guidare trasformazioni o risolvere problemi complessi che richiedono sia creatività che disciplina.",
     scores: { N: 78, T: 71, E: 68, S: 44, F: 29, I: 32 }
   };
-  showResults(fakeResult);
+  // Mostra il pannello risultati
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('chat-view').style.display = 'none';
+  document.getElementById('result-panel').classList.add('visible');
+  updateProgress(72);
+  renderResult(fakeResult);
 }
 </script>
 <!-- ─── FINE DEV BUTTON ─── -->
+
 </body>
 </html>
