@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import anthropic
 import os
 import traceback
+import httpx
 
 app = FastAPI(title="Typology API")
 
@@ -31,6 +32,106 @@ async def preflight_handler(rest_of_path: str):
 api_key = os.environ.get("ANTHROPIC_API_KEY")
 client = anthropic.Anthropic(api_key=api_key) if api_key else None
 
+# ── HumanTypology RAG ────────────────────────────────────────────────────────
+HUMTYPO_URL = "https://humantypology-api.onrender.com"
+HUMTYPO_TOKEN = os.environ.get("HUMTYPO_API_TOKEN", "")
+
+FUNCTION_NAMES_IT = {
+    "E": "Estroverso", "I": "Introverso",
+    "T": "Pensiero",   "F": "Sentimento",
+    "S": "Sensazione", "N": "Intuizione"
+}
+
+def rag_ask(question: str, top_k: int = 5) -> str:
+    """Interroga il RAG HumanTypology e restituisce la risposta testuale."""
+    try:
+        resp = httpx.post(
+            f"{HUMTYPO_URL}/ask",
+            json={"question": question, "top_k": top_k},
+            headers={"x-admin-token": HUMTYPO_TOKEN},
+            timeout=30.0
+        )
+        resp.raise_for_status()
+        return resp.json().get("answer", "")
+    except Exception as e:
+        return f"[RAG non disponibile: {e}]"
+
+def build_profile_sections(type_code: str, orientation: str, dominant: str,
+                            auxiliary: str, inferior: str, otroversion: str) -> dict:
+    """Costruisce le 8 sezioni del profilo interrogando il RAG."""
+
+    dom_name  = FUNCTION_NAMES_IT.get(dominant, dominant)
+    aux_name  = FUNCTION_NAMES_IT.get(auxiliary, auxiliary)
+    inf_name  = FUNCTION_NAMES_IT.get(inferior, inferior)
+    ori_name  = FUNCTION_NAMES_IT.get(orientation, orientation)
+    sigla     = f"{orientation}-{dominant}-{auxiliary}-{inferior}"
+
+    queries = {
+        "panoramica": (
+            f"Descrivi in modo completo e discorsivo il profilo tipologico {sigla} "
+            f"({ori_name}, funzione dominante {dom_name}, ausiliaria {aux_name}). "
+            f"Includi caratteristiche principali, comportamenti tipici e figure storiche rappresentative."
+        ),
+        "punti_forza": (
+            f"Quali sono i punti di forza del tipo {sigla} con funzione dominante {dom_name}?"
+        ),
+        "aree_miglioramento": (
+            f"Quali sono le aree di miglioramento e i rischi del tipo {sigla} "
+            f"con funzione dominante {dom_name} e funzione inferiore {inf_name}?"
+        ),
+        "funzione_dominante": (
+            f"Descrivi la funzione dominante {dom_name} nella tipologia junghiana: "
+            f"come si manifesta, cosa caratterizza chi la ha come funzione principale."
+        ),
+        "funzione_ausiliaria": (
+            f"Descrivi la funzione ausiliaria {aux_name} e come collabora con la funzione "
+            f"dominante {dom_name} nel profilo {sigla}."
+        ),
+        "funzione_mediatrice": (
+            f"Descrivi il ruolo della funzione mediatrice (terziaria) nella tipologia junghiana "
+            f"per il profilo {sigla}."
+        ),
+        "funzione_inferiore": (
+            f"Descrivi la funzione inferiore {inf_name} nel profilo {sigla}: "
+            f"come si manifesta, quali rischi comporta e come integrarla nel percorso di crescita."
+        ),
+        "dinamica_evoluzione": (
+            f"Descrivi la dinamica di evoluzione tra la funzione dominante {dom_name} "
+            f"e la funzione inferiore {inf_name} nel tipo {sigla}: eccessi, ombra e integrazione."
+        ),
+        "prevalente_collaborante": (
+            f"Descrivi come funzionano insieme la funzione prevalente {dom_name} "
+            f"e la funzione collaborante {aux_name} nel profilo {sigla}."
+        ),
+        "tipi_affini": (
+            f"Quali sono i tipi psicologici affini al profilo {sigla} "
+            f"e quali caratteristiche li accomunano?"
+        ),
+        "tipo_opposto": (
+            f"Qual è il tipo psicologico opposto/difficile per il profilo {sigla} "
+            f"e come si manifesta la difficoltà relazionale?"
+        ),
+        "otroversione": (
+            f"Descrivi l'otroversione '{otroversion}' nella tipologia junghiana: "
+            f"cosa significa, come si manifesta nel profilo {sigla}."
+        ),
+        "sviluppo": (
+            f"Descrivi il percorso di sviluppo e integrazione consigliato per il profilo {sigla}, "
+            f"con particolare attenzione alla funzione inferiore {inf_name}."
+        ),
+        "altri_profili": (
+            f"Come può il profilo {sigla} comunicare e lavorare efficacemente "
+            f"con gli altri tipi psicologici diversi da sé? Suggerimenti pratici."
+        ),
+    }
+
+    sections = {}
+    for key, query in queries.items():
+        sections[key] = rag_ask(query)
+
+    return sections
+
+# ── Questions & scoring ──────────────────────────────────────────────────────
 QUESTIONS = [
   {"id":1,"scala":"TF","latoA":"T","testoA":"Quando ho bisogno di recuperare energie, preferisco stare da solo.","testoB":"Quando ho bisogno di recuperare energie, mi fa bene parlare o stare con qualcuno."},
   {"id":2,"scala":"TF","latoA":"T","testoA":"Preferisco un linguaggio diretto e ordinato.","testoB":"Preferisco un linguaggio accogliente e che metta a proprio agio."},
@@ -174,22 +275,22 @@ def calculate_type(responses: dict) -> dict:
     }
 
 TYPE_PROFILES = {
-    "E-TN": "Profilo estroverso con Pensiero come funzione guida e Intuizione a supporto. Strategico e visionario, unisce logica e capacità di proiettarsi nel futuro. La Funzione Inferiore Sentimento rappresenta la sua area di crescita principale.",
-    "E-TS": "Profilo estroverso con Pensiero come funzione guida e Sensazione a supporto. Pratico, concreto e orientato ai fatti, ama costruire processi affidabili. La Funzione Inferiore Sentimento è l'area di sviluppo meno consapevole.",
-    "E-FN": "Profilo estroverso con Sentimento come funzione guida e Intuizione a supporto. Empatico, creativo e motivatore, ispira gli altri con visione e calore umano. La Funzione Inferiore Pensiero è l'area di sviluppo meno consapevole.",
-    "E-FS": "Profilo estroverso con Sentimento come funzione guida e Sensazione a supporto. Caloroso, pratico e accogliente, crea armonia concreta attorno a sé. La Funzione Inferiore Pensiero è la dimensione meno accessibile.",
-    "E-ST": "Profilo estroverso con Sensazione come funzione guida e Pensiero a supporto. Dinamico e orientato all'azione, coglie opportunità concrete e decide rapidamente. La Funzione Inferiore Intuizione è l'area di sviluppo principale.",
-    "E-SF": "Profilo estroverso con Sensazione come funzione guida e Sentimento a supporto. Vive il presente con intensità, condivide emozioni e cura concretamente il gruppo. La Funzione Inferiore Intuizione è la dimensione meno accessibile.",
-    "E-NT": "Profilo estroverso con Intuizione come funzione guida e Pensiero a supporto. Visionario pragmatico, combina creatività e logica per generare idee e realizzarle. La Funzione Inferiore Sensazione è l'area di sviluppo principale.",
-    "E-NF": "Profilo estroverso con Intuizione come funzione guida e Sentimento a supporto. Ispiratore naturale, vede il potenziale nelle persone e nelle situazioni. La Funzione Inferiore Sensazione è la dimensione meno accessibile.",
-    "I-TN": "Profilo introverso con Pensiero come funzione guida e Intuizione a supporto. Analitico e visionario, coglie pattern nascosti e costruisce modelli teorici profondi. La Funzione Inferiore Sentimento è la dimensione meno accessibile.",
-    "I-TS": "Profilo introverso con Pensiero come funzione guida e Sensazione a supporto. Meticoloso e tradizionalista, coniuga analisi logica e memoria sensoriale eccellente. La Funzione Inferiore Sentimento è l'area di crescita principale.",
-    "I-FN": "Profilo introverso con Sentimento come funzione guida e Intuizione a supporto. Profondo e immaginativo, vive guidato da valori personali e intuizioni simboliche. La Funzione Inferiore Pensiero è l'area di crescita principale.",
-    "I-FS": "Profilo introverso con Sentimento come funzione guida e Sensazione a supporto. Stabile, sensibile e radicato, custodisce valori e tradizioni con cura emotiva. La Funzione Inferiore Pensiero è la dimensione meno accessibile.",
-    "I-ST": "Profilo introverso con Sensazione come funzione guida e Pensiero a supporto. Metodico, preciso e tradizionalista, conserva procedure collaudate con grande affidabilità. La Funzione Inferiore Intuizione è l'area di crescita principale.",
-    "I-SF": "Profilo introverso con Sensazione come funzione guida e Sentimento a supporto. Custode di valori e tradizioni, unisce sensibilità emotiva e cura concreta del dettaglio. La Funzione Inferiore Intuizione è la dimensione meno accessibile.",
-    "I-NT": "Profilo introverso con Intuizione come funzione guida e Pensiero a supporto. Analista visionario, ama le idee astratte e sistematizza visioni profonde con rigore logico. La Funzione Inferiore Sensazione è l'area di crescita principale.",
-    "I-NF": "Profilo introverso con Intuizione come funzione guida e Sentimento a supporto. Profondo e spirituale, percepisce significati archetipici e guida gli altri con visione ed empatia. La Funzione Inferiore Sensazione è la dimensione meno accessibile.",
+    "E-TN": "Profilo estroverso con Pensiero come funzione guida e Intuizione a supporto. Strategico e visionario, unisce logica e capacità di proiettarsi nel futuro.",
+    "E-TS": "Profilo estroverso con Pensiero come funzione guida e Sensazione a supporto. Pratico, concreto e orientato ai fatti, ama costruire processi affidabili.",
+    "E-FN": "Profilo estroverso con Sentimento come funzione guida e Intuizione a supporto. Empatico, creativo e motivatore, ispira gli altri con visione e calore umano.",
+    "E-FS": "Profilo estroverso con Sentimento come funzione guida e Sensazione a supporto. Caloroso, pratico e accogliente, crea armonia concreta attorno a sé.",
+    "E-ST": "Profilo estroverso con Sensazione come funzione guida e Pensiero a supporto. Dinamico e orientato all'azione, coglie opportunità concrete e decide rapidamente.",
+    "E-SF": "Profilo estroverso con Sensazione come funzione guida e Sentimento a supporto. Vive il presente con intensità, condivide emozioni e cura concretamente il gruppo.",
+    "E-NT": "Profilo estroverso con Intuizione come funzione guida e Pensiero a supporto. Visionario pragmatico, combina creatività e logica per generare idee e realizzarle.",
+    "E-NF": "Profilo estroverso con Intuizione come funzione guida e Sentimento a supporto. Ispiratore naturale, vede il potenziale nelle persone e nelle situazioni.",
+    "I-TN": "Profilo introverso con Pensiero come funzione guida e Intuizione a supporto. Analitico e visionario, coglie pattern nascosti e costruisce modelli teorici profondi.",
+    "I-TS": "Profilo introverso con Pensiero come funzione guida e Sensazione a supporto. Meticoloso e tradizionalista, coniuga analisi logica e memoria sensoriale eccellente.",
+    "I-FN": "Profilo introverso con Sentimento come funzione guida e Intuizione a supporto. Profondo e immaginativo, vive guidato da valori personali e intuizioni simboliche.",
+    "I-FS": "Profilo introverso con Sentimento come funzione guida e Sensazione a supporto. Stabile, sensibile e radicato, custodisce valori e tradizioni con cura emotiva.",
+    "I-ST": "Profilo introverso con Sensazione come funzione guida e Pensiero a supporto. Metodico, preciso e tradizionalista, conserva procedure collaudate con grande affidabilità.",
+    "I-SF": "Profilo introverso con Sensazione come funzione guida e Sentimento a supporto. Custode di valori e tradizioni, unisce sensibilità emotiva e cura concreta del dettaglio.",
+    "I-NT": "Profilo introverso con Intuizione come funzione guida e Pensiero a supporto. Analista visionario, ama le idee astratte e sistematizza visioni profonde con rigore logico.",
+    "I-NF": "Profilo introverso con Intuizione come funzione guida e Sentimento a supporto. Profondo e spirituale, percepisce significati archetipici e guida gli altri con visione ed empatia.",
 }
 
 class ChatMessage(BaseModel):
@@ -284,7 +385,42 @@ def submit_test(data: SubmitTest):
     try:
         result = calculate_type(data.responses)
         profile = TYPE_PROFILES.get(result["type_code"], "")
-        return {**result, "profile_description": profile}
+
+        # Arricchisci con le sezioni dal RAG
+        sections = build_profile_sections(
+            type_code=result["type_code"],
+            orientation=result["orientation"],
+            dominant=result["dominant"],
+            auxiliary=result["auxiliary"],
+            inferior=result["inferior"],
+            otroversion=result["otroversion"]
+        )
+
+        return {
+            **result,
+            "profile_description": profile,
+            "sections": sections
+        }
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/profile/{type_code}")
+def get_profile(type_code: str, otroversion: str = "Not Belonging"):
+    """Endpoint diretto per ottenere il profilo completo dal RAG dato un type_code."""
+    parts = type_code.upper().split("-")
+    if len(parts) < 3:
+        raise HTTPException(status_code=400, detail="type_code non valido. Formato atteso: E-TN o E-T-N-F")
+    orientation = parts[0]
+    dominant    = parts[1][0] if len(parts) == 2 else parts[1]
+    auxiliary   = parts[1][1] if len(parts) == 2 else parts[2]
+    inferior    = INFERIOR.get(dominant, "?")
+    sections = build_profile_sections(
+        type_code=type_code,
+        orientation=orientation,
+        dominant=dominant,
+        auxiliary=auxiliary,
+        inferior=inferior,
+        otroversion=otroversion
+    )
+    return {"type_code": type_code, "sections": sections}
