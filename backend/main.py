@@ -6,6 +6,9 @@ import anthropic
 import os
 import traceback
 import httpx
+import asyncio
+import uuid
+from threading import Thread
 
 app = FastAPI(title="Typology API")
 
@@ -32,6 +35,9 @@ async def preflight_handler(rest_of_path: str):
 api_key = os.environ.get("ANTHROPIC_API_KEY")
 client = anthropic.Anthropic(api_key=api_key) if api_key else None
 
+# ── Job store (in-memory) ──────────────────────────────────────────────────
+JOBS: dict = {}  # job_id -> {"status": "pending"|"done", "sections": {...}}
+
 # ── HumanTypology RAG ────────────────────────────────────────────────────────
 HUMTYPO_URL = "https://humantypology-api.onrender.com"
 HUMTYPO_TOKEN = os.environ.get("HUMTYPO_API_TOKEN", "")
@@ -42,53 +48,53 @@ FUNCTION_NAMES_IT = {
     "S": "Sensazione", "N": "Intuizione"
 }
 
-def rag_ask(question: str, top_k: int = 5) -> str:
-    """Interroga il RAG, recupera i chunk e sintetizza la risposta con Claude."""
+async def rag_ask_async(question: str, top_k: int = 5) -> str:
+    """Interroga il RAG in modo asincrono e sintetizza con Claude."""
     try:
-        # 1. Recupera i chunk dal RAG
-        resp = httpx.post(
-            f"{HUMTYPO_URL}/ask",
-            json={"question": question, "top_k": top_k},
-            headers={"x-admin-token": HUMTYPO_TOKEN},
-            timeout=30.0
-        )
-        resp.raise_for_status()
-        data = resp.json()
+        async with httpx.AsyncClient(timeout=25.0) as ac:
+            resp = await ac.post(
+                f"{HUMTYPO_URL}/ask",
+                json={"question": question, "top_k": top_k},
+                headers={"x-admin-token": HUMTYPO_TOKEN},
+            )
+            resp.raise_for_status()
+            data = resp.json()
 
-        # 2. Se il RAG ha già una risposta usala
         if data.get("answer"):
             return data["answer"]
 
-        # 3. Altrimenti sintetizza i chunk con Claude
         chunks = data.get("chunks", [])
         if not chunks:
             return ""
 
         context = "\n\n---\n\n".join(c["text"] for c in chunks if c.get("text"))
-        if not context.strip():
-            return ""
-
-        if not client:
-            return context[:500]
+        if not context.strip() or not client:
+            return context[:500] if context else ""
 
         synthesis = client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=800,
+            max_tokens=600,
             system=(
-                "Sei un esperto di psicologia junghiana e tipologia dei tipi psicologici. "
-                "Rispondi in italiano in modo chiaro, discorsivo e professionale. "
-                "Usa esclusivamente le informazioni fornite nel contesto. "
-                "Non inventare informazioni non presenti nel contesto."
+                "Sei un esperto di psicologia junghiana. "
+                "Rispondi in italiano in modo chiaro e professionale. "
+                "Usa solo le informazioni del contesto fornito."
             ),
             messages=[{
                 "role": "user",
-                "content": f"Contesto estratto dalla biblioteca junghiana:\n\n{context}\n\nDomanda: {question}\n\nRispondi in modo completo e discorsivo basandoti sul contesto."
+                "content": f"Contesto:\n\n{context}\n\nDomanda: {question}\n\nRispondi in modo discorsivo."
             }]
         )
         return synthesis.content[0].text
 
     except Exception as e:
-        return f"[Errore: {e}]"
+        return ""
+
+def rag_ask(question: str, top_k: int = 5) -> str:
+    """Wrapper sincrono per compatibilità."""
+    try:
+        return asyncio.get_event_loop().run_until_complete(rag_ask_async(question, top_k))
+    except Exception:
+        return ""
 
 def build_profile_sections(type_code: str, orientation: str, dominant: str,
                             auxiliary: str, inferior: str, otroversion: str) -> dict:
@@ -159,9 +165,22 @@ def build_profile_sections(type_code: str, orientation: str, dominant: str,
         ),
     }
 
-    sections = {}
-    for key, query in queries.items():
-        sections[key] = rag_ask(query)
+    async def fetch_all():
+        tasks = {key: rag_ask_async(query) for key, query in queries.items()}
+        results = await asyncio.gather(*tasks.values(), return_exceptions=True)
+        return {k: (v if isinstance(v, str) else "") for k, v in zip(tasks.keys(), results)}
+
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, fetch_all())
+                sections = future.result(timeout=55)
+        else:
+            sections = loop.run_until_complete(fetch_all())
+    except Exception as e:
+        sections = {key: "" for key in queries.keys()}
 
     return sections
 
@@ -410,6 +429,21 @@ Niente frasi motivazionali. Sii preciso e concreto."""
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+def _generate_sections_bg(job_id: str, result: dict):
+    """Genera le sezioni in background e salva nel job store."""
+    try:
+        sections = build_profile_sections(
+            type_code=result["type_code"],
+            orientation=result["orientation"],
+            dominant=result["dominant"],
+            auxiliary=result["auxiliary"],
+            inferior=result["inferior"],
+            otroversion=result["otroversion"]
+        )
+        JOBS[job_id] = {"status": "done", "sections": sections}
+    except Exception as e:
+        JOBS[job_id] = {"status": "error", "sections": {}, "error": str(e)}
+
 @app.post("/api/submit")
 def submit_test(data: SubmitTest):
     if not client:
@@ -420,24 +454,29 @@ def submit_test(data: SubmitTest):
         result = calculate_type(data.responses)
         profile = TYPE_PROFILES.get(result["type_code"], "")
 
-        # Arricchisci con le sezioni dal RAG
-        sections = build_profile_sections(
-            type_code=result["type_code"],
-            orientation=result["orientation"],
-            dominant=result["dominant"],
-            auxiliary=result["auxiliary"],
-            inferior=result["inferior"],
-            otroversion=result["otroversion"]
-        )
+        # Avvia generazione sezioni in background
+        job_id = str(uuid.uuid4())
+        JOBS[job_id] = {"status": "pending", "sections": {}}
+        Thread(target=_generate_sections_bg, args=(job_id, result), daemon=True).start()
 
+        # Risponde subito con i dati base + job_id
         return {
             **result,
             "profile_description": profile,
-            "sections": sections
+            "sections": {},
+            "job_id": job_id
         }
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/sections/{job_id}")
+def get_sections(job_id: str):
+    """Polling endpoint: restituisce le sezioni quando sono pronte."""
+    job = JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job non trovato")
+    return job
 
 @app.get("/api/profile/{type_code}")
 def get_profile(type_code: str, otroversion: str = "Not Belonging"):
