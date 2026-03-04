@@ -411,7 +411,11 @@ async function loadAndShowResult(){
   updateProgress(72);
   document.getElementById('chat-view').style.display='none';
   document.getElementById('result-panel').classList.add('visible');
-  try{const data=await callAPI('/api/submit',{responses});renderResult(data);}
+  try{
+    const data=await callAPI('/api/submit',{responses});
+    renderResult(data);
+    if(data.job_id) pollSections(data.job_id);
+  }
   catch(e){document.getElementById('res-desc').textContent='Errore nel calcolo del profilo. Ricarica la pagina.';}
 }
 
@@ -528,16 +532,15 @@ document.getElementById('user-input').addEventListener('keydown',e=>{if(e.key===
 wakeAndStart();
 
 async function simulaRisultato(){
-  // Genera 72 risposte fake bilanciate per ottenere E-N-T-S Not Belonging
   const fakeResponses = Object.fromEntries([
-    ...Array.from({length:12},(_,i)=>[String(i+1),'A']),   // TF: 12A→T
-    ...Array.from({length:12},(_,i)=>[String(i+13),'B']),  // TF: 12B→F  → T vince
-    ...Array.from({length:20},(_,i)=>[String(i+25),'B']),  // SN: 20B→N
-    ...Array.from({length:4}, (_,i)=>[String(i+45),'A']),  // SN: 4A→S   → N vince
-    ...Array.from({length:4}, (_,i)=>[String(i+49),'A']),  // IE: 4A→I
-    ...Array.from({length:8}, (_,i)=>[String(i+53),'B']),  // IE: 8B→E   → E vince
-    ...Array.from({length:4}, (_,i)=>[String(i+61),'B']),  // OT: 4B→NB
-    ...Array.from({length:8}, (_,i)=>[String(i+65),'A']),  // OT: 8A→B   → NB vince
+    ...Array.from({length:12},(_,i)=>[String(i+1),'A']),
+    ...Array.from({length:12},(_,i)=>[String(i+13),'B']),
+    ...Array.from({length:20},(_,i)=>[String(i+25),'B']),
+    ...Array.from({length:4}, (_,i)=>[String(i+45),'A']),
+    ...Array.from({length:4}, (_,i)=>[String(i+49),'A']),
+    ...Array.from({length:8}, (_,i)=>[String(i+53),'B']),
+    ...Array.from({length:4}, (_,i)=>[String(i+61),'B']),
+    ...Array.from({length:8}, (_,i)=>[String(i+65),'A']),
   ]);
 
   document.getElementById('loading-screen').style.display='none';
@@ -546,18 +549,76 @@ async function simulaRisultato(){
   document.getElementById('result-panel').classList.add('visible');
   updateProgress(72);
 
-  // Mostra subito una versione base mentre aspetta il RAG
-  const baseResult={sigla:'E-N-T-S',otroversion:'Not Belonging',profile_description:'',
-    scores:{N:78,T:71,E:68,S:44,F:29,I:32},sections:{}};
-  renderResult(baseResult);
-
-  // Chiama il backend reale per ottenere le sezioni dal RAG
   try {
     const data = await callAPI('/api/submit', {responses: fakeResponses});
     renderResult(data);
+    if(data.job_id) pollSections(data.job_id);
   } catch(e) {
     console.warn('Simula: backend non raggiunto', e);
   }
+}
+
+async function pollSections(jobId){
+  const maxAttempts = 40; // 40 × 3s = 2 minuti max
+  let attempts = 0;
+  // Mostra indicatore di caricamento nelle sezioni
+  const loadingIds = ['prof-panoramica','prof-funzione-fondamentale','prof-funzione-ausiliaria',
+    'prof-funzione-mediatrice','prof-funzione-inferiore','prof-prevalente-intro',
+    'prof-prevalente','prof-collaborante','prof-affini','prof-opposto','prof-sviluppo','prof-altri'];
+  loadingIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && !el.textContent.trim()) el.textContent='Caricamento dal database...';
+  });
+
+  const poll = async () => {
+    if(attempts >= maxAttempts) return;
+    attempts++;
+    try {
+      const resp = await fetch(API+'/api/sections/'+jobId);
+      if(!resp.ok) { setTimeout(poll, 3000); return; }
+      const job = await resp.json();
+      if(job.status === 'done' && job.sections) {
+        // Aggiorna solo le sezioni, mantieni il resto
+        const d = {sections: job.sections};
+        const setText=(id,txt)=>{const el=document.getElementById(id);if(el&&txt)el.textContent=txt;};
+        const setList=(id,items)=>{const el=document.getElementById(id);if(el&&items&&items.length)el.innerHTML=items.map(i=>`<li>${i}</li>`).join('');};
+        const sec=job.sections;
+        const rag=(key)=>(sec[key]&&!sec[key].startsWith('['))? sec[key]:'';
+        const toList=txt=>txt?txt.split('\n').map(s=>s.replace(/^[-•·*]\s*/,'')).filter(s=>s.trim().length>5):[];
+
+        setText('prof-panoramica', rag('panoramica'));
+        setList('col-forza', toList(rag('punti_forza')));
+        setList('col-miglioramento', toList(rag('aree_miglioramento')));
+        setText('prof-funzione-fondamentale', rag('funzione_dominante'));
+        setText('prof-funzione-ausiliaria', rag('funzione_ausiliaria'));
+        setText('prof-funzione-mediatrice', rag('funzione_mediatrice'));
+        setText('prof-funzione-inferiore', rag('funzione_inferiore'));
+
+        const dynText=rag('dinamica_evoluzione');
+        const dynLines=dynText.split('\n').filter(s=>s.trim().length>5);
+        const third=Math.ceil(dynLines.length/3);
+        setList('dyn-col1', dynLines.slice(0,third));
+        setList('dyn-col2', dynLines.slice(third,third*2));
+        setList('dyn-col3', dynLines.slice(third*2));
+
+        const prevText=rag('prevalente_collaborante');
+        const prevLines=prevText.split('\n\n').filter(s=>s.trim().length>5);
+        setText('prof-prevalente-intro', prevLines[0]||'');
+        setText('prof-prevalente', prevLines[1]||'');
+        setText('prof-collaborante', prevLines.slice(2).join('\n\n')||'');
+
+        setText('prof-affini', rag('tipi_affini'));
+        setText('prof-opposto', rag('tipo_opposto'));
+        setText('prof-sviluppo', rag('sviluppo'));
+        setText('prof-altri', rag('altri_profili'));
+      } else if(job.status === 'pending') {
+        setTimeout(poll, 3000);
+      }
+    } catch(e) {
+      setTimeout(poll, 3000);
+    }
+  };
+  setTimeout(poll, 3000);
 }
 </script>
 
